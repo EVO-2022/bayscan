@@ -1,0 +1,97 @@
+# BayScan Configuration
+# Edit these values for your location and preferences
+
+# Location Settings
+location:
+  name: "Mobile Bay Dock"
+  latitude: 30.488192
+  longitude: -88.102113
+  timezone: "America/Chicago"
+
+# NOAA Stations Configuration
+# Tide predictions: 8735180 (Bayou La Batre, AL)
+# Real-time conditions: 8736897 (Middle Bay Light, AL)
+# Find stations at: https://tidesandcurrents.noaa.gov/
+tide:
+  # Station for tide PREDICTIONS (heights, times, stages)
+  prediction_station_id: "8735180"
+  prediction_station_name: "Bayou La Batre, AL"
+  # Station for REAL-TIME CONDITIONS (wind, water temp, air temp, pressure, water level)
+  realtime_station_id: "8736897"
+  realtime_station_name: "Middle Bay Light, AL"
+  api_url: "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter"
+
+# NWS Weather
+# Grid points are auto-discovered from lat/lon
+weather:
+  api_url: "https://api.weather.gov"
+  user_agent: "FishingForecast/1.0 (Personal Use)"
+
+# Data Refresh Settings
+scheduler:
+  fetch_interval_minutes: 15
+  forecast_compute_interval_minutes: 15
+
+# Alert Thresholds (0-100 scale)
+# Set the minimum bite score to trigger an alert per species
+alerts:
+  speckled_trout: 70
+  redfish: 65
+  flounder: 60
+  sheepshead: 55
+  mullet: 50
+  mackerel: 65
+  croaker: 55
+  stingray: 40
+
+# Marine Forecast & Safety Settings
+marine:
+  zone: "AMZ250"  # Coastal waters from Pensacola FL to Pascagoula MS out 20 NM
+  fetch_interval_minutes: 30  # How often to fetch marine forecast
+
+  # Safety thresholds for calculating safety score
+  safety_thresholds:
+    wave_height:
+      safe: 2.0      # feet
+      caution: 4.0   # feet
+      unsafe: 6.0    # feet
+    wind_gust:
+      safe: 20       # mph
+      caution: 25    # mph
+      unsafe: 35     # mph
+
+    # Score penalties (subtracted from 100)
+    penalties:
+      small_craft_advisory: 25
+      gale_warning: 50
+      thunderstorm_warning: 30
+      rough_seas: 25
+      moderate_seas: 10
+
+  # How much to reduce bite scores based on safety level
+  bite_score_penalties:
+    UNSAFE: 50      # Reduce bite score by up to 50 points
+    CAUTION: 20     # Reduce bite score by up to 20 points
+    SAFE: 0         # No reduction
+
+# Optional: Email Alerts (leave blank to disable)
+email:
+  enabled: false
+  smtp_server: ""
+  smtp_port: 587
+  username: ""
+  password: ""
+  from_address: ""
+  to_address: ""
+
+# Optional: Telegram Alerts (leave blank to disable)
+telegram:
+  enabled: false
+  bot_token: ""
+  chat_id: ""
+
+# Web Server Settings
+server:
+  host: "0.0.0.0"  # Listen on all interfaces
+  port: 8080
+  debug: false

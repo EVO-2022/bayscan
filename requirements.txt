@@ -1,0 +1,20 @@
+# Fishing Forecast Application Dependencies
+
+# Web Framework
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+
+# Database
+sqlalchemy==2.0.23
+
+# HTTP Requests
+requests==2.31.0
+
+# Configuration
+pyyaml==6.0.1
+
+# Scheduling
+apscheduler==3.10.4
+
+# Additional utilities
+python-dateutil==2.8.2

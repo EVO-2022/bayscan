@@ -1,0 +1,1915 @@
+/* BayScan Dark Theme - Primary Style */
+
+/* ===== Theme Variables ===== */
+:root {
+    /* Dark backgrounds */
+    --bg-primary: #1a1d23;
+    --bg-secondary: #23272f;
+    --bg-tertiary: #2d3139;
+    --bg-elevated: #353a45;
+
+    /* Text colors */
+    --text-primary: #e4e6eb;
+    --text-secondary: #b0b3b8;
+    --text-tertiary: #8a8d91;
+    --text-inverse: #1a1d23;
+
+    /* Accent colors - adjusted for dark theme */
+    --accent-primary: #4facfe;
+    --accent-secondary: #00d4ff;
+
+    /* Tier colors - high contrast for dark theme */
+    --tier-hot: #ff6b6b;
+    --tier-hot-glow: rgba(255, 107, 107, 0.15);
+    --tier-decent: #4facfe;
+    --tier-decent-glow: rgba(79, 172, 254, 0.15);
+    --tier-slow: #ffd93d;
+    --tier-slow-glow: rgba(255, 217, 61, 0.15);
+    --tier-unlikely: #95a5a6;
+    --tier-unlikely-glow: rgba(149, 165, 166, 0.15);
+
+    /* Borders and dividers */
+    --border-subtle: rgba(255, 255, 255, 0.08);
+    --border-moderate: rgba(255, 255, 255, 0.15);
+    --border-strong: rgba(255, 255, 255, 0.25);
+
+    /* Shadows */
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.5);
+
+    /* Interactive states */
+    --hover-overlay: rgba(255, 255, 255, 0.05);
+    --active-overlay: rgba(255, 255, 255, 0.1);
+
+    /* Skeleton loading */
+    --skeleton-base: rgba(255, 255, 255, 0.08);
+    --skeleton-shimmer: rgba(255, 255, 255, 0.15);
+}
+
+/* ===== Global Dark Theme Styles ===== */
+
+body {
+    background: linear-gradient(135deg, #0d1117 0%, #161b22 100%);
+    color: var(--text-primary);
+}
+
+.container {
+    background: var(--bg-primary);
+    box-shadow: var(--shadow-lg);
+}
+
+/* Header - Keep dark gradient */
+header {
+    background: linear-gradient(135deg, #0a0e13 0%, #161b22 50%, #1f2429 100%);
+    color: var(--text-primary);
+}
+
+/* Tab Navigation */
+.tab-nav {
+    background: var(--bg-secondary);
+    border-bottom: 2px solid var(--border-moderate);
+}
+
+.tab-button {
+    color: var(--text-secondary);
+}
+
+.tab-button:hover {
+    background: var(--hover-overlay);
+    color: var(--text-primary);
+}
+
+.tab-button.active {
+    background: var(--bg-tertiary);
+    color: var(--accent-primary);
+    border-bottom-color: var(--accent-primary);
+}
+
+/* Tab Content */
+.tab-content {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+/* Cards and Panels */
+.species-panel,
+.forecast-section,
+.info-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-subtle);
+}
+
+/* Current Conditions Container */
+.conditions-container {
+    background: var(--bg-secondary);
+    border: 2px solid var(--border-moderate);
+}
+
+/* Condition Sections (Tide, Weather, etc.) */
+.condition-section {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-moderate);
+    color: var(--text-primary);
+}
+
+.condition-section .section-title {
+    color: #ffffff !important;
+}
+
+.condition-section .section-label {
+    color: var(--text-secondary);
+}
+
+.condition-section .section-value {
+    color: #ffffff;
+}
+
+.condition-section .section-content {
+    color: var(--text-primary);
+}
+
+.section-header-with-value {
+    color: var(--text-primary);
+}
+
+.section-header-with-icon {
+    color: var(--text-primary);
+}
+
+/* Info Rows (Tide/Weather details) */
+.info-row {
+    color: var(--text-primary);
+}
+
+.info-label {
+    color: var(--text-secondary) !important;
+}
+
+.info-value {
+    color: #ffffff !important;
+}
+
+.info-row.subinfo {
+    color: var(--text-secondary);
+}
+
+/* Confidence Score Display */
+.confidence-score-display {
+    background: var(--bg-secondary);
+    border: 2px solid var(--border-moderate);
+}
+
+.confidence-label {
+    color: #ffffff;
+}
+
+.confidence-note {
+    color: var(--text-secondary);
+}
+
+/* Fishing Log Section */
+.fishing-log-section {
+    background: var(--bg-secondary);
+}
+
+/* New Catch Card (middle layer) */
+.new-catch-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-moderate);
+}
+
+.new-catch-card h3 {
+    color: #ffffff !important;
+}
+
+/* Catch Form Container */
+.catch-form {
+    background: var(--bg-secondary);
+    padding: 20px;
+    border-radius: 10px;
+    border: 1px solid var(--border-moderate);
+}
+
+/* Zone Map Container */
+.zone-map-container {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-moderate);
+    color: var(--text-primary);
+}
+
+.zone-map-container h3 {
+    color: #ffffff !important;
+}
+
+.zone-map-description {
+    color: var(--text-secondary);
+}
+
+.zone-map-image {
+    border: 2px solid var(--border-moderate);
+}
+
+/* Zone Map in Modal */
+.modal-zone-map-content {
+    background: var(--bg-secondary);
+}
+
+/* Zone Map in Popover */
+.zone-map-reference {
+    background: var(--bg-secondary);
+}
+
+.zone-map-caption {
+    color: var(--text-secondary);
+}
+
+/* Log Form Fields */
+.form-field label {
+    color: #ffffff !important;
+}
+
+.form-field label .required {
+    color: var(--tier-hot);
+}
+
+/* Log Stats and Cards */
+.recent-catches-card,
+.stats-summary-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-moderate);
+    color: var(--text-primary);
+}
+
+.recent-catches-card h3,
+.stats-summary-card h3 {
+    color: #ffffff !important;
+}
+
+.catch-item {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-primary);
+}
+
+.catch-item .catch-species {
+    color: #ffffff;
+}
+
+.catch-item .catch-details {
+    color: var(--text-secondary);
+}
+
+.catch-timestamp {
+    color: var(--text-tertiary);
+}
+
+/* Stat Items */
+.stat-item {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-moderate);
+}
+
+.stat-value {
+    color: #ffffff;
+}
+
+.stat-label {
+    color: var(--text-secondary);
+}
+
+/* Alert Items */
+.alert-item {
+    background: var(--bg-secondary);
+    border-left: 5px solid var(--tier-hot);
+    border: 1px solid var(--border-moderate);
+    box-shadow: var(--shadow-sm);
+}
+
+.alert-item:hover {
+    background: var(--bg-tertiary);
+    box-shadow: var(--shadow-md);
+}
+
+.species-card,
+.bait-card {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-moderate);
+    color: var(--text-primary);
+}
+
+/* Tinted species and bait cards for dark theme */
+.species-card.hot,
+.bait-card.hot {
+    background: rgba(76, 175, 80, 0.2);  /* Green tint for dark mode */
+    border-color: rgba(76, 175, 80, 0.5);
+}
+
+.species-card.decent,
+.bait-card.decent {
+    background: rgba(33, 150, 243, 0.2);  /* Blue tint for dark mode */
+    border-color: rgba(33, 150, 243, 0.5);
+}
+
+.species-card.slow,
+.bait-card.slow {
+    background: rgba(244, 67, 54, 0.2);  /* Red tint for dark mode */
+    border-color: rgba(244, 67, 54, 0.5);
+}
+
+.species-card:hover,
+.bait-card:hover {
+    background: var(--bg-elevated);
+    border-color: var(--border-strong);
+}
+
+/* Maintain tint on hover for both species and bait cards */
+.species-card.hot:hover,
+.bait-card.hot:hover {
+    background: rgba(76, 175, 80, 0.25);
+    border-color: rgba(76, 175, 80, 0.6);
+}
+
+.species-card.decent:hover,
+.bait-card.decent:hover {
+    background: rgba(33, 150, 243, 0.25);
+    border-color: rgba(33, 150, 243, 0.6);
+}
+
+.species-card.slow:hover,
+.bait-card.slow:hover {
+    background: rgba(244, 67, 54, 0.25);
+    border-color: rgba(244, 67, 54, 0.6);
+}
+
+/* Section Headers */
+h2, h3, h4 {
+    color: #ffffff !important; /* White for maximum visibility */
+}
+
+/* Buttons */
+.btn-primary {
+    background: var(--accent-primary);
+    color: var(--text-inverse);
+}
+
+.btn-primary:hover {
+    background: var(--accent-secondary);
+}
+
+.btn-secondary {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-moderate);
+}
+
+.btn-secondary:hover {
+    background: var(--bg-elevated);
+}
+
+/* Modals and Popovers */
+.modal-content,
+.popover-content,
+.conditions-popover {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-moderate);
+}
+
+.modal-header {
+    border-bottom: 1px solid var(--border-moderate);
+}
+
+.modal-body {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+.modal-close,
+.close-popover {
+    color: var(--text-secondary);
+}
+
+.modal-close:hover,
+.close-popover:hover {
+    color: var(--text-primary);
+}
+
+/* Species Modal Regulations (Size/Creel Limits) */
+#modalRegulations {
+    color: #b0b3b8 !important; /* Light grey, not quite white */
+}
+
+/* Species Info Cards - Behavior Cheatsheet */
+.behavior-cheatsheet {
+    background: linear-gradient(135deg, var(--bg-tertiary) 0%, var(--bg-elevated) 100%);
+    border: 2px solid var(--border-moderate);
+}
+
+.behavior-cheatsheet h3 {
+    color: #ffffff !important;
+}
+
+.behavior-summary {
+    background: var(--bg-secondary);
+    border-left: 4px solid var(--accent-primary);
+}
+
+.behavior-summary p {
+    color: #ffffff !important;
+}
+
+.behavior-summary-text {
+    color: var(--text-primary) !important;
+}
+
+.behavior-grid {
+    color: var(--text-primary);
+}
+
+.behavior-card {
+    background: var(--bg-tertiary);
+    border: 2px solid var(--border-moderate);
+    color: var(--text-primary);
+}
+
+.behavior-card h4 {
+    color: #ffffff !important;
+}
+
+.behavior-card .card-value,
+.behavior-card p,
+.behavior-card div {
+    color: #ffffff !important;
+}
+
+.behavior-card .behavior-text {
+    font-size: 0.9rem; /* Consistent font size for best tide */
+}
+
+/* Info Section (Baits, Techniques, Rigs in Modal) */
+.info-section {
+    color: var(--text-primary);
+}
+
+.info-section h3 {
+    color: #ffffff !important;
+}
+
+.info-section ul li {
+    color: #ffffff !important;
+    font-size: 0.95rem; /* Match pro tips font size */
+}
+
+.info-section ul li:before {
+    color: var(--accent-primary) !important;
+}
+
+.info-section p {
+    color: var(--text-primary) !important;
+}
+
+/* Pro Tips Section */
+.info-section.tips p {
+    background: var(--bg-secondary);
+    border-left: 4px solid #5cb85c;
+    color: #ffffff !important;
+    font-size: 0.95rem;
+}
+
+/* Depth Tiers */
+.depth-tiers {
+    color: var(--text-primary);
+}
+
+.depth-tier {
+    background: var(--bg-tertiary);
+    border-left: 3px solid var(--border-moderate);
+    color: var(--text-primary);
+}
+
+.depth-tier .depth-range {
+    color: #ffffff !important;
+}
+
+.depth-tier .depth-note {
+    color: var(--text-secondary) !important;
+}
+
+/* Depth Range (standalone) */
+.depth-range {
+    color: #ffffff !important;
+    font-size: 0.9rem; /* Match best tide font size */
+}
+
+.depth-tier .depth-range {
+    font-size: 0.85rem; /* Keep tier depth ranges slightly smaller */
+}
+
+/* Best Baits, Techniques, Rigs */
+.best-baits-list,
+.technique-list {
+    color: var(--text-primary) !important;
+}
+
+.best-baits-list li,
+.technique-list li {
+    color: var(--text-primary) !important;
+}
+
+/* Popover Backdrop */
+.popover-backdrop {
+    background: rgba(0, 0, 0, 0.8);
+}
+
+/* Forms */
+input,
+select,
+textarea {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-moderate);
+    color: var(--text-primary);
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+    border-color: var(--accent-primary);
+    background: var(--bg-elevated);
+}
+
+input::placeholder,
+textarea::placeholder {
+    color: var(--text-tertiary);
+}
+
+/* Hourly Outlook Strip */
+.hourly-outlook-strip {
+    background: var(--bg-secondary);
+}
+
+.hour-block {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-subtle);
+}
+
+.hour-block:hover {
+    background: var(--bg-elevated);
+}
+
+/* Conditions Summary Popover - All Sections */
+.summary-text {
+    background: var(--bg-secondary);
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 4px solid var(--accent-primary);
+    color: #ffffff !important;
+}
+
+/* Depth Info Section */
+.depth-info {
+    background: transparent;
+    padding: 15px;
+    border-radius: 8px;
+}
+
+.depth-info h4 {
+    color: #ffffff !important;
+}
+
+.depth-details {
+    background: var(--bg-secondary);
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 4px solid var(--accent-primary);
+    color: var(--text-primary);
+}
+
+.depth-species {
+    color: #ffffff !important;
+}
+
+.depth-species strong {
+    color: #ffffff !important;
+}
+
+.depth-info .depth-range {
+    color: #ffffff !important;
+    font-size: 0.9rem;
+}
+
+.depth-note {
+    color: var(--text-secondary) !important;
+}
+
+/* Best Zones Info */
+.best-zones-info {
+    background: var(--bg-secondary);
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 4px solid var(--accent-primary);
+}
+
+.best-zones-info h4 {
+    color: #ffffff !important;
+}
+
+.zones-list {
+    color: #ffffff !important;
+}
+
+.zone-map-reference {
+    background: var(--bg-tertiary);
+}
+
+.zone-map-caption {
+    color: var(--text-secondary) !important;
+}
+
+/* Rig Info */
+.rig-info {
+    background: transparent;
+    padding: 15px;
+    border-radius: 8px;
+}
+
+.rig-info h4 {
+    color: #ffffff !important;
+}
+
+.rig-recommendation {
+    background: var(--bg-secondary);
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 4px solid var(--accent-primary);
+    color: #ffffff !important;
+}
+
+/* Current Strength Info */
+.current-strength-info {
+    background: transparent;
+    padding: 15px;
+    border-radius: 8px;
+}
+
+.current-strength-info h4 {
+    color: #ffffff !important;
+}
+
+.current-strength-meter {
+    background: var(--bg-secondary);
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 4px solid var(--accent-primary);
+}
+
+.strength-label {
+    color: #ffffff !important;
+}
+
+.strength-bar {
+    background: var(--bg-tertiary);
+}
+
+/* Water Clarity Info */
+.clarity-info {
+    background: transparent;
+    padding: 15px;
+    border-radius: 8px;
+}
+
+.clarity-info h4 {
+    color: #ffffff !important;
+}
+
+.clarity-status {
+    background: var(--bg-secondary);
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 4px solid var(--accent-primary);
+    color: #ffffff !important;
+}
+
+.clarity-tip {
+    display: none !important;
+}
+
+/* Best Bait Info */
+.best-bait-info {
+    background: transparent;
+    padding: 15px;
+    border-radius: 8px;
+}
+
+.best-bait-info h4 {
+    color: #ffffff !important;
+}
+
+.best-bait-text {
+    background: var(--bg-secondary);
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 4px solid var(--accent-primary);
+    color: #ffffff !important;
+}
+
+/* Pro Tip Info */
+.pro-tip-info {
+    background: transparent;
+    padding: 15px;
+    border-radius: 8px;
+}
+
+.pro-tip-info h4 {
+    color: #ffffff !important;
+}
+
+.pro-tip-text {
+    background: var(--bg-secondary);
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 4px solid #5cb85c;
+    color: #ffffff !important;
+}
+
+/* Top Species List */
+.top-species-list {
+    background: transparent;
+    padding: 15px;
+    border-radius: 8px;
+}
+
+.top-species-list h4 {
+    color: #ffffff !important;
+}
+
+#topSpeciesItems {
+    background: var(--bg-secondary);
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 4px solid var(--accent-primary);
+    color: #ffffff !important;
+}
+
+.top-species-item {
+    background: var(--bg-tertiary) !important;
+    border-left-color: var(--accent-primary) !important;
+}
+
+.top-species-item .species-name {
+    color: #ffffff !important;
+}
+
+.top-species-item .species-score {
+    color: var(--text-secondary) !important;
+}
+
+/* Moon & Tide Window */
+.moon-tide-info {
+    background: transparent;
+    padding: 15px;
+    border-radius: 8px;
+}
+
+.moon-tide-info h4 {
+    color: #ffffff !important;
+}
+
+.moon-tide-text {
+    background: var(--bg-secondary);
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 4px solid var(--accent-primary);
+    color: #ffffff !important;
+}
+
+.info-section {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-subtle);
+}
+
+/* Zone Map */
+.zone-map-reference,
+.modal-zone-map-content {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-moderate);
+}
+
+/* Stats and Metrics */
+.stat-item {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-subtle);
+}
+
+.stat-value {
+    color: var(--text-primary);
+}
+
+.stat-label {
+    color: var(--text-secondary);
+}
+
+/* Weekly Summary Cards */
+.summary-card {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-moderate);
+}
+
+/* Bottom Navigation */
+.bottom-nav {
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border-moderate);
+}
+
+.bottom-nav-item {
+    color: var(--text-secondary);
+}
+
+.bottom-nav-item.active {
+    color: var(--accent-primary);
+}
+
+/* Tier Badges - Enhanced for Dark Theme */
+.species-tier-badge.hot,
+.bait-tier-HOT {
+    /* GREEN for HOT */
+    background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+    box-shadow: 0 0 12px rgba(76, 175, 80, 0.5);
+}
+
+.species-tier-badge.decent,
+.bait-tier-DECENT {
+    /* BLUE for DECENT */
+    background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+    box-shadow: 0 0 12px rgba(33, 150, 243, 0.5);
+}
+
+.species-tier-badge.slow,
+.bait-tier-SLOW {
+    /* RED for SLOW */
+    background: linear-gradient(135deg, #F44336 0%, #D32F2F 100%);
+    box-shadow: 0 0 12px rgba(244, 67, 54, 0.5);
+    color: transparent;
+}
+
+.species-tier-badge.unlikely,
+.bait-tier-UNLIKELY {
+    background: linear-gradient(135deg, var(--tier-unlikely) 0%, #7f8c8d 100%);
+    box-shadow: 0 0 12px var(--tier-unlikely-glow);
+}
+
+/* Loading States - Skeletons */
+.skeleton {
+    background: var(--skeleton-base);
+    border-radius: 4px;
+    position: relative;
+    overflow: hidden;
+}
+
+.skeleton::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        var(--skeleton-shimmer) 50%,
+        transparent 100%
+    );
+    animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+    0% {
+        transform: translateX(-100%);
+    }
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+/* Skeleton Variants */
+.skeleton-text {
+    height: 1rem;
+    margin: 0.5rem 0;
+}
+
+.skeleton-title {
+    height: 1.5rem;
+    width: 60%;
+    margin: 1rem 0;
+}
+
+.skeleton-card {
+    height: 120px;
+    margin: 1rem 0;
+}
+
+.skeleton-hour-block {
+    height: 80px;
+    width: 80px;
+    border-radius: 8px;
+}
+
+/* Tooltips */
+.tooltip-trigger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--bg-elevated);
+    color: var(--text-secondary);
+    font-size: 0.7rem;
+    font-weight: bold;
+    cursor: help;
+    margin-left: 4px;
+    border: 1px solid var(--border-moderate);
+    transition: all 0.2s ease;
+}
+
+.tooltip-trigger:hover {
+    background: var(--accent-primary);
+    color: white;
+    border-color: var(--accent-primary);
+}
+
+.tooltip {
+    position: absolute;
+    background: var(--bg-elevated);
+    color: var(--text-primary);
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    line-height: 1.4;
+    max-width: 250px;
+    border: 1px solid var(--border-strong);
+    box-shadow: var(--shadow-md);
+    z-index: 1000;
+    display: none;
+}
+
+.tooltip.show {
+    display: block;
+}
+
+.tooltip::before {
+    content: '';
+    position: absolute;
+    top: -6px;
+    left: 12px;
+    width: 0;
+    height: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-bottom: 6px solid var(--border-strong);
+}
+
+/* Scrollbars - Dark Theme */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--bg-elevated);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--border-strong);
+}
+
+/* High Contrast for Accessibility */
+@media (prefers-contrast: high) {
+    :root {
+        --border-subtle: rgba(255, 255, 255, 0.2);
+        --border-moderate: rgba(255, 255, 255, 0.3);
+        --border-strong: rgba(255, 255, 255, 0.5);
+    }
+}
+
+/* ===== Condensed Log Form Styles ===== */
+
+/* Tighter spacing for condensed form */
+.form-grid.condensed {
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.form-grid.condensed .form-field label {
+    margin-bottom: 4px;
+    font-size: 0.85rem;
+}
+
+/* Compact size buttons (S/K/B) */
+.size-buttons-compact {
+    display: flex;
+    gap: 6px;
+    margin-top: 4px;
+}
+
+.size-btn-compact {
+    flex: 1;
+    padding: 8px;
+    background: var(--bg-tertiary);
+    border: 2px solid var(--border-moderate);
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--text-primary);
+}
+
+.size-btn-compact:hover {
+    background: var(--bg-elevated);
+    border-color: var(--border-strong);
+}
+
+.size-btn-compact.active {
+    background: var(--accent-primary);
+    color: var(--text-inverse);
+    border-color: var(--accent-primary);
+}
+
+/* Compact toggle buttons (Yes/No) */
+.toggle-buttons-compact {
+    display: flex;
+    gap: 6px;
+    margin-top: 4px;
+}
+
+.toggle-btn-compact {
+    flex: 1;
+    padding: 8px;
+    background: var(--bg-tertiary);
+    border: 2px solid var(--border-moderate);
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--text-primary);
+}
+
+.toggle-btn-compact:hover {
+    background: var(--bg-elevated);
+    border-color: var(--border-strong);
+}
+
+.toggle-btn-compact.active {
+    background: var(--accent-primary);
+    color: var(--text-inverse);
+    border-color: var(--accent-primary);
+}
+
+/* ===== Weekly Summary Redesign ===== */
+
+/* Hero card for total catches */
+.weekly-hero-card {
+    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+    padding: 30px;
+    border-radius: 12px;
+    text-align: center;
+    margin-bottom: 25px;
+    box-shadow: var(--shadow-lg);
+}
+
+.hero-stat {
+    font-size: 3.5rem;
+    font-weight: 700;
+    color: white;
+    line-height: 1;
+    margin-bottom: 10px;
+}
+
+.hero-label {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.95);
+}
+
+/* Clear sections layout */
+.weekly-sections {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.weekly-section {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-moderate);
+    border-radius: 10px;
+    padding: 20px;
+    transition: all 0.2s ease;
+}
+
+.weekly-section:hover {
+    background: var(--bg-tertiary);
+    border-color: var(--border-strong);
+}
+
+.weekly-section .section-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #ffffff; /* White for maximum visibility */
+    margin: 0 0 12px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.weekly-section .section-content {
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+.weekly-section .section-content .stat-value {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--accent-primary);
+    margin-bottom: 5px;
+}
+
+.weekly-section .section-content .stat-count {
+    font-size: 0.95rem;
+    color: var(--text-tertiary);
+}
+
+/* Zone tags */
+.zone-tag {
+    display: inline-block;
+    padding: 6px 12px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-moderate);
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 4px;
+}
+
+/* Time period tags */
+.time-tag {
+    display: inline-block;
+    padding: 6px 12px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-moderate);
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 4px;
+}
+
+/* ===== Fish Behavior Today Summary ===== */
+
+.fish-behavior-section {
+    margin: 20px 0;
+}
+
+.behavior-summary-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-moderate);
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: var(--shadow-md);
+}
+
+.behavior-summary-text {
+    color: var(--text-primary);
+    line-height: 1.8;
+    font-size: 1rem;
+}
+
+.behavior-summary-text p {
+    margin: 12px 0;
+}
+
+.behavior-summary-text strong {
+    color: var(--accent-primary);
+    font-weight: 600;
+}
+
+.behavior-species-item {
+    margin: 15px 0;
+    padding: 12px;
+    background: var(--bg-tertiary);
+    border-left: 3px solid var(--accent-primary);
+    border-radius: 6px;
+}
+
+.behavior-species-name {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+    display: block;
+}
+
+.behavior-species-description {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.6;
+}
+
+/* ===== Make Species Icons Bigger ===== */
+
+/* Increase species card name/icon size by ~15% */
+.species-card .species-name,
+.species-name {
+    font-size: 1.27rem; /* Was 1.1rem - increased by 15% */
+    color: #ffffff !important; /* White for maximum visibility in dark mode */
+}
+
+/* Also increase bait card name/icon size */
+.bait-card .bait-name,
+.bait-name {
+    font-size: 1.27rem;
+    color: #ffffff !important; /* White for maximum visibility in dark mode */
+}
+
+/* ===== Stable Container Sizes (Reduce UI Jumps) ===== */
+
+/* Give species grid a minimum height to prevent layout shift */
+.species-grid {
+    min-height: 400px;
+}
+
+/* Hourly outlook strip stable height */
+.hourly-strip-container {
+    min-height: 100px;
+}
+
+/* Behavior summary stable height */
+.behavior-summary-card {
+    min-height: 120px;
+}
+
+/* Weekly sections stable sizing */
+.weekly-section .section-content {
+    min-height: 50px;
+}
+
+/* Prevent tab content from jumping */
+.tab-content {
+    min-height: 300px;
+}
+
+/* Footer */
+footer {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border-top: 1px solid var(--border-moderate);
+}
+
+footer p {
+    color: var(--text-secondary);
+}
+
+footer a {
+    color: var(--accent-primary);
+}
+
+footer a:hover {
+    color: var(--accent-secondary);
+}
+
+/* ===== Logging Sub-Tabs & Zone Map Modal ===== */
+
+/* Log Header with Zone Map Button */
+.log-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.zone-map-modal-btn {
+    background: var(--bg-tertiary);
+    color: var(--accent-primary);
+    border: 1px solid var(--accent-primary);
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.zone-map-modal-btn:hover {
+    background: var(--accent-primary);
+    color: var(--text-inverse);
+}
+
+/* Zone Map Modal */
+.zone-map-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    z-index: 10000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    backdrop-filter: blur(5px);
+}
+
+.zone-map-modal-content {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-moderate);
+    border-radius: 12px;
+    max-width: 800px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 20px;
+    position: relative;
+}
+
+.zone-map-modal-close {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: var(--bg-tertiary);
+    border: none;
+    color: var(--text-primary);
+    font-size: 2rem;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    transition: all 0.2s;
+}
+
+.zone-map-modal-close:hover {
+    background: var(--bg-elevated);
+    transform: rotate(90deg);
+}
+
+.zone-map-modal h3 {
+    color: var(--text-primary);
+    margin-bottom: 10px;
+}
+
+.zone-map-modal .zone-map-description {
+    color: var(--text-secondary);
+    margin-bottom: 15px;
+}
+
+.zone-map-modal .zone-map-image {
+    width: 100%;
+    border-radius: 8px;
+    border: 1px solid var(--border-subtle);
+}
+
+/* Logging Sub-Tabs */
+.logging-subtabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    border-bottom: 2px solid var(--border-subtle);
+    padding-bottom: 0;
+}
+
+.logging-subtab {
+    flex: 1;
+    background: transparent;
+    border: none;
+    border-bottom: 3px solid transparent;
+    color: var(--text-secondary);
+    padding: 12px 16px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.logging-subtab:hover {
+    color: var(--text-primary);
+    background: var(--hover-overlay);
+}
+
+.logging-subtab.active {
+    color: var(--accent-primary);
+    border-bottom-color: var(--accent-primary);
+}
+
+/* Logging Tab Content */
+.logging-tab-content {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Fish, Bait, and Predator Log Cards - UNIFIED STYLING */
+.catches-list,
+.bait-logs-list,
+.predator-logs-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.catch-log-card,
+.bait-log-card,
+.predator-log-card {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    padding: 15px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.catch-log-card:hover,
+.bait-log-card:hover,
+.predator-log-card:hover {
+    background: var(--bg-elevated);
+    border-color: var(--border-moderate);
+    transform: translateX(4px);
+}
+
+/* Two-Line Card Format */
+.log-card-line1 {
+    font-size: 0.85rem;
+    color: var(--text-tertiary);
+    margin-bottom: 6px;
+    font-weight: 500;
+}
+
+.log-card-line2 {
+    font-size: 1.05rem;
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.log-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.log-card-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.log-card-time {
+    font-size: 0.85rem;
+    color: var(--text-tertiary);
+}
+
+.log-card-details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.log-card-detail {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.log-card-detail strong {
+    color: var(--text-primary);
+}
+
+/* Recent Predator Activity Tag */
+.predator-activity-tag {
+    background: rgba(255, 107, 107, 0.15);
+    border: 1px solid var(--tier-hot);
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 0.85rem;
+    color: var(--tier-hot);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
+}
+
+.predator-activity-tag::before {
+    content: "⚠️";
+    font-size: 1rem;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .log-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .zone-map-modal-btn {
+        width: 100%;
+        text-align: center;
+    }
+
+    .logging-subtabs {
+        gap: 4px;
+    }
+
+    .logging-subtab {
+        font-size: 0.9rem;
+        padding: 10px 8px;
+    }
+
+    .zone-map-modal-content {
+        padding: 15px;
+        max-height: 95vh;
+    }
+
+    .zone-map-modal-close {
+        width: 35px;
+        height: 35px;
+        font-size: 1.5rem;
+    }
+}
+
+/* ===== Learning Notes Modal & Info Icon ===== */
+
+/* Info Icon on Species Cards */
+.learning-info-icon {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-moderate);
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.95rem;
+    color: var(--accent-primary);
+    cursor: pointer;
+    transition: all 0.2s;
+    z-index: 10;
+}
+
+.learning-info-icon:hover {
+    background: var(--accent-primary);
+    color: var(--text-inverse);
+    transform: scale(1.1);
+}
+
+.species-card {
+    position: relative; /* Make sure icon can be positioned absolutely */
+}
+
+/* Learning Notes Modal */
+.learning-notes-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    z-index: 10000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    backdrop-filter: blur(5px);
+}
+
+.learning-notes-modal-content {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-moderate);
+    border-radius: 12px;
+    max-width: 600px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 25px;
+    position: relative;
+}
+
+.learning-notes-close {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: var(--bg-tertiary);
+    border: none;
+    color: var(--text-primary);
+    font-size: 2rem;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    transition: all 0.2s;
+}
+
+.learning-notes-close:hover {
+    background: var(--bg-elevated);
+    transform: rotate(90deg);
+}
+
+.learning-notes-modal h3 {
+    color: var(--text-primary);
+    margin-bottom: 20px;
+    padding-right: 40px; /* Space for close button */
+}
+
+.learning-notes-body {
+    color: var(--text-primary);
+}
+
+/* Learning Stats Grid */
+.learning-notes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.learning-stat {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    padding: 15px;
+    text-align: center;
+}
+
+.stat-label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--accent-primary);
+    margin-bottom: 5px;
+}
+
+.stat-description {
+    font-size: 0.8rem;
+    color: var(--text-tertiary);
+}
+
+/* Learning Explanation */
+.learning-explanation {
+    background: var(--bg-tertiary);
+    border-left: 4px solid var(--accent-primary);
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.learning-explanation h4 {
+    color: var(--text-primary);
+    margin-bottom: 10px;
+    font-size: 1rem;
+}
+
+.learning-explanation p {
+    color: var(--text-secondary);
+    margin: 0;
+    line-height: 1.6;
+}
+
+.last-updated {
+    font-size: 0.8rem;
+    color: var(--text-tertiary);
+    margin-top: 10px;
+    font-style: italic;
+}
+
+/* Learning Tips */
+.learning-tips {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    padding: 15px;
+}
+
+.learning-tips h4 {
+    color: var(--text-primary);
+    margin-bottom: 12px;
+    font-size: 1rem;
+}
+
+.learning-tips ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+.learning-tips li {
+    color: var(--text-secondary);
+    margin-bottom: 10px;
+    padding-left: 25px;
+    position: relative;
+    line-height: 1.5;
+}
+
+.learning-tips li::before {
+    content: "→";
+    position: absolute;
+    left: 5px;
+    color: var(--accent-primary);
+    font-weight: bold;
+}
+
+/* Mobile Responsive for Learning Modal */
+@media (max-width: 768px) {
+    .learning-notes-modal-content {
+        padding: 20px;
+        max-height: 95vh;
+    }
+
+    .learning-notes-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .stat-value {
+        font-size: 1.75rem;
+    }
+
+    .learning-info-icon {
+        width: 24px;
+        height: 24px;
+        font-size: 0.85rem;
+    }
+}
+
+/* ===== Hourly Forecast Modal - Match Dark Theme ===== */
+
+/* Hour Modal Tier Badge */
+.hour-modal-tier {
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+/* Condition Cards - Match main site theme */
+.hour-condition-card {
+    background: var(--bg-secondary) !important;
+    border: 1px solid var(--border-moderate);
+    padding: 15px;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.hour-condition-card h4 {
+    font-size: 0.9rem;
+    color: var(--text-secondary) !important;
+    margin-bottom: 8px;
+    font-weight: 600;
+}
+
+.condition-value {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #ffffff !important;
+    margin-bottom: 4px;
+}
+
+.condition-subvalue {
+    font-size: 0.85rem;
+    color: var(--text-secondary) !important;
+}
+
+/* Hour Modal Species Section */
+.hour-modal-species {
+    margin-top: 25px;
+}
+
+.hour-modal-species h3 {
+    font-size: 1.2rem;
+    margin-bottom: 15px;
+    color: #ffffff !important;
+}
+
+/* Species Cards in Hourly View - Match Dark Theme */
+.hour-species-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+}
+
+.hour-species-card {
+    background: var(--bg-tertiary) !important;
+    border: 1px solid var(--border-moderate);
+    padding: 12px;
+    border-radius: 8px;
+    border-left: 4px solid var(--border-moderate);
+}
+
+.hour-species-card.hot {
+    background: rgba(76, 175, 80, 0.2) !important;
+    border-color: rgba(76, 175, 80, 0.5);
+    border-left-color: #4CAF50 !important;
+}
+
+.hour-species-card.decent {
+    background: rgba(33, 150, 243, 0.2) !important;
+    border-color: rgba(33, 150, 243, 0.5);
+    border-left-color: #2196F3 !important;
+}
+
+.hour-species-card.slow {
+    background: rgba(244, 67, 54, 0.2) !important;
+    border-color: rgba(244, 67, 54, 0.5);
+    border-left-color: #F44336 !important;
+}
+
+.hour-species-card.unlikely {
+    background: rgba(149, 165, 166, 0.2) !important;
+    border-color: rgba(149, 165, 166, 0.5);
+    border-left-color: var(--tier-unlikely) !important;
+}
+
+.hour-species-card .species-name {
+    font-weight: 700;
+    font-size: 1rem;
+    color: #ffffff !important;
+    margin-bottom: 6px;
+}
+
+.hour-species-card .species-tier-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+    color: white;
+}
+
+.hour-species-card.hot .species-tier-badge {
+    background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+    box-shadow: 0 0 8px rgba(76, 175, 80, 0.4);
+}
+
+.hour-species-card.decent .species-tier-badge {
+    background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+    box-shadow: 0 0 8px rgba(33, 150, 243, 0.4);
+}
+
+.hour-species-card.slow .species-tier-badge {
+    background: linear-gradient(135deg, #F44336 0%, #D32F2F 100%);
+    box-shadow: 0 0 8px rgba(244, 67, 54, 0.4);
+}
+
+.hour-species-card.unlikely .species-tier-badge {
+    background: linear-gradient(135deg, var(--tier-unlikely) 0%, #7f8c8d 100%);
+    box-shadow: 0 0 8px var(--tier-unlikely-glow);
+}
+
+.hour-species-card .species-score {
+    font-size: 0.85rem;
+    color: var(--text-secondary) !important;
+}

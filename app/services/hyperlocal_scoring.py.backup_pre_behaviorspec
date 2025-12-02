@@ -1,0 +1,537 @@
+"""Hyperlocal bite scoring engine for BelleFontaine Dock.
+
+NEW SPEC FORMULA:
+bite_score = seasonal_baseline + environmental_adjustments + recent_activity + predator_decay
+
+All bite scores are zone-specific.
+"""
+from datetime import datetime, timedelta
+from typing import Dict, Any, Optional, List
+from sqlalchemy.orm import Session
+from app.models.schemas import Catch, BaitLog, PredatorLog
+from app.rules.uglyfishing_calendar import get_seasonal_baseline_score
+import logging
+
+logger = logging.getLogger(__name__)
+
+
+def calculate_zone_bite_score(
+    db: Session,
+    species: str,
+    zone_id: str,
+    conditions: Dict[str, Any],
+    date: datetime = None
+) -> Dict[str, Any]:
+    """
+    Calculate hyperlocal bite score for a specific species in a specific zone.
+
+    Args:
+        db: Database session
+        species: Species name (e.g., 'speckled_trout')
+        zone_id: Zone identifier (e.g., 'Zone 3')
+        conditions: Current environmental conditions dict
+        date: Date for calculation (defaults to now)
+
+    Returns:
+        Dictionary with:
+        - bite_score: Final 0-100 score
+        - seasonal_baseline: UglyFishing baseline (0-90)
+        - environmental_adjustment: Environmental modifier (-30 to +10)
+        - recent_activity_bonus: Bonus from recent catches (0-10)
+        - predator_penalty: Penalty from recent predators (0 to -20)
+        - breakdown: Detailed breakdown of adjustments
+    """
+    if date is None:
+        date = datetime.utcnow()
+
+    # Step 1: Seasonal baseline (UglyFishing scale: 0-90)
+    seasonal_baseline = get_seasonal_baseline_score(species, date)
+
+    # Step 2: Environmental adjustments (-35 to +15) - includes structure bonus
+    env_adjustment = calculate_environmental_adjustment(species, conditions, zone_id)
+
+    # Step 3: Recent activity bonus (0-10) - catches in last 4-6 hours
+    recent_bonus = calculate_recent_activity_bonus(db, species, zone_id, hours_back=6)
+
+    # Step 4: Predator decay penalty (0 to -20) - predator sightings in last 4 hours
+    predator_penalty = calculate_predator_penalty(db, zone_id, hours_back=4)
+
+    # Final score (clamped to 0-100)
+    final_score = seasonal_baseline + env_adjustment + recent_bonus + predator_penalty
+    final_score = max(0.0, min(100.0, final_score))
+
+    return {
+        'bite_score': round(final_score, 1),
+        'seasonal_baseline': round(seasonal_baseline, 1),
+        'environmental_adjustment': round(env_adjustment, 1),
+        'recent_activity_bonus': round(recent_bonus, 1),
+        'predator_penalty': round(predator_penalty, 1),
+        'zone_id': zone_id,
+        'breakdown': {
+            'baseline_label': get_baseline_label(seasonal_baseline),
+            'env_factors': get_env_breakdown(species, conditions),
+            'recent_catches_count': get_recent_catches_count(db, species, zone_id, 6),
+            'recent_predators': get_recent_predators(db, zone_id, 4)
+        }
+    }
+
+
+def calculate_environmental_adjustment(species: str, conditions: Dict[str, Any], zone_id: str = None) -> float:
+    """
+    Calculate environmental adjustments based on historically strong ranges.
+    Range: -30 to +10 points.
+
+    Factors considered:
+    - Water temperature vs ideal range
+    - Tide stage (incoming, outgoing, slack, high, low)
+    - Wind speed and direction
+    - Time of day
+    - Current speed and direction
+    - Barometric pressure trend
+    - STRUCTURE MATCH (zone-specific bonus)
+    """
+    adjustment = 0.0
+
+    # Get species-specific ideal ranges (this should be expanded with real data)
+    ideal_ranges = get_species_ideal_ranges(species)
+
+    # Water temperature adjustment (-10 to +5)
+    water_temp = conditions.get('water_temperature')
+    if water_temp is not None:
+        temp_adj = calculate_temp_adjustment(water_temp, ideal_ranges['water_temp'])
+        adjustment += temp_adj
+
+    # Tide stage adjustment (-8 to +3)
+    tide_stage = conditions.get('tide_stage', 'slack')
+    tide_adj = calculate_tide_adjustment(species, tide_stage, conditions.get('current_speed', 0))
+    adjustment += tide_adj
+
+    # Wind adjustment (-5 to +2)
+    wind_speed = conditions.get('wind_speed', 0)
+    wind_direction = conditions.get('wind_direction', 'N')
+    wind_adj = calculate_wind_adjustment(wind_speed, wind_direction)
+    adjustment += wind_adj
+
+    # Time of day adjustment (-4 to +2)
+    time_of_day = conditions.get('time_of_day', 'midday')
+    time_adj = calculate_time_adjustment(species, time_of_day)
+    adjustment += time_adj
+
+    # Pressure adjustment (-3 to +1)
+    pressure = conditions.get('barometric_pressure')
+    if pressure is not None:
+        pressure_adj = calculate_pressure_adjustment(pressure)
+        adjustment += pressure_adj
+
+    # STRUCTURE MATCH ADJUSTMENT (-5 to +5) - NEW
+    if zone_id:
+        structure_adj = calculate_structure_adjustment(species, zone_id, time_of_day)
+        adjustment += structure_adj
+
+    # Clamp to range (expanded to accommodate structure bonus)
+    return max(-35.0, min(15.0, adjustment))
+
+
+def calculate_recent_activity_bonus(
+    db: Session,
+    species: str,
+    zone_id: str,
+    hours_back: int = 6
+) -> float:
+    """
+    Calculate bonus from recent catches (0-10 points).
+    Each catch in last 4-6 hours adds a small bump that decays over time.
+
+    Decay formula:
+    - Catches in last 2 hours: +2 points each (max +6)
+    - Catches 2-4 hours ago: +1 point each (max +3)
+    - Catches 4-6 hours ago: +0.5 points each (max +1)
+    """
+    now = datetime.utcnow()
+    cutoff = now - timedelta(hours=hours_back)
+
+    try:
+        # Get recent catches for this species in this zone
+        recent_catches = db.query(Catch).filter(
+            Catch.species == species,
+            Catch.zone_id == zone_id,
+            Catch.timestamp >= cutoff
+        ).all()
+
+        bonus = 0.0
+        for catch in recent_catches:
+            hours_ago = (now - catch.timestamp).total_seconds() / 3600
+
+            if hours_ago <= 2:
+                # Very recent: +2 points per catch
+                bonus += 2.0 * catch.quantity
+            elif hours_ago <= 4:
+                # Recent: +1 point per catch
+                bonus += 1.0 * catch.quantity
+            else:
+                # Older: +0.5 points per catch
+                bonus += 0.5 * catch.quantity
+
+        # Cap at +10
+        return min(10.0, bonus)
+
+    except Exception as e:
+        logger.error(f"Error calculating recent activity bonus: {e}")
+        return 0.0
+
+
+def calculate_predator_penalty(
+    db: Session,
+    zone_id: str,
+    hours_back: int = 4
+) -> float:
+    """
+    Calculate penalty from recent predator sightings (0 to -20 points).
+
+    Predators affect bait species and schooling fish.
+    Decays fully after 4 hours.
+
+    Penalty formula:
+    - Predator seen in last 1 hour: -20 points
+    - Predator seen 1-2 hours ago: -15 points
+    - Predator seen 2-3 hours ago: -10 points
+    - Predator seen 3-4 hours ago: -5 points
+    """
+    now = datetime.utcnow()
+    cutoff = now - timedelta(hours=hours_back)
+
+    try:
+        # Get recent predator sightings in this zone
+        recent_predators = db.query(PredatorLog).filter(
+            PredatorLog.zone == zone_id,
+            PredatorLog.time >= cutoff
+        ).all()
+
+        penalty = 0.0
+        for pred in recent_predators:
+            hours_ago = (now - pred.time).total_seconds() / 3600
+
+            if hours_ago <= 1:
+                penalty -= 20.0
+            elif hours_ago <= 2:
+                penalty -= 15.0
+            elif hours_ago <= 3:
+                penalty -= 10.0
+            else:
+                penalty -= 5.0
+
+        # Only apply most severe single penalty (don't stack)
+        return max(-20.0, penalty)
+
+    except Exception as e:
+        logger.error(f"Error calculating predator penalty: {e}")
+        return 0.0
+
+
+# Helper functions
+
+def get_species_ideal_ranges(species: str) -> Dict[str, Any]:
+    """
+    Get ideal environmental ranges for a species.
+    These should be learned from historical catch data.
+    For now, using general Gulf Coast guidelines.
+    """
+    # Default ranges (to be refined with real data)
+    defaults = {
+        'water_temp': (65, 75),  # Ideal range in Fahrenheit
+        'ideal_tide_stages': ['incoming', 'outgoing'],
+        'ideal_times': ['dawn', 'evening'],
+    }
+
+    # Species-specific overrides
+    species_ranges = {
+        'speckled_trout': {
+            'water_temp': (63, 73),
+            'ideal_tide_stages': ['incoming', 'outgoing'],
+            'ideal_times': ['dawn', 'morning', 'evening'],
+        },
+        'redfish': {
+            'water_temp': (65, 80),
+            'ideal_tide_stages': ['incoming', 'high'],
+            'ideal_times': ['morning', 'evening'],
+        },
+        'flounder': {
+            'water_temp': (60, 72),
+            'ideal_tide_stages': ['incoming', 'outgoing'],
+            'ideal_times': ['dawn', 'evening', 'night'],
+        },
+        'sheepshead': {
+            'water_temp': (55, 70),
+            'ideal_tide_stages': ['slack', 'incoming'],
+            'ideal_times': ['morning', 'midday'],
+        },
+        'black_drum': {
+            'water_temp': (60, 75),
+            'ideal_tide_stages': ['incoming', 'high'],
+            'ideal_times': ['morning', 'midday'],
+        },
+    }
+
+    return species_ranges.get(species, defaults)
+
+
+def calculate_temp_adjustment(water_temp: float, ideal_range: tuple) -> float:
+    """Calculate temperature adjustment (-10 to +5)."""
+    min_ideal, max_ideal = ideal_range
+    mid_ideal = (min_ideal + max_ideal) / 2
+
+    if min_ideal <= water_temp <= max_ideal:
+        # In ideal range: bonus
+        return 5.0
+    elif abs(water_temp - mid_ideal) <= 5:
+        # Close to ideal: small bonus
+        return 2.0
+    elif abs(water_temp - mid_ideal) <= 10:
+        # Workable: neutral
+        return 0.0
+    elif abs(water_temp - mid_ideal) <= 15:
+        # Marginal: small penalty
+        return -5.0
+    else:
+        # Poor: large penalty
+        return -10.0
+
+
+def calculate_tide_adjustment(species: str, tide_stage: str, current_speed: float) -> float:
+    """Calculate tide adjustment (-8 to +3)."""
+    ideal_ranges = get_species_ideal_ranges(species)
+    ideal_stages = ideal_ranges['ideal_tide_stages']
+
+    if tide_stage in ideal_stages:
+        # Ideal tide stage
+        if current_speed > 0.5:
+            return 3.0  # Strong current + ideal stage
+        else:
+            return 2.0
+    elif tide_stage == 'slack':
+        return -8.0  # Slack tide is generally poor
+    else:
+        return -2.0  # Non-ideal but not slack
+
+
+def calculate_wind_adjustment(wind_speed: float, wind_direction: str) -> float:
+    """Calculate wind adjustment (-5 to +2)."""
+    if wind_speed < 5:
+        return -3.0  # Too calm
+    elif wind_speed <= 10:
+        return 2.0  # Ideal light chop
+    elif wind_speed <= 15:
+        return 0.0  # Workable
+    elif wind_speed <= 20:
+        return -3.0  # Getting rough
+    else:
+        return -5.0  # Too rough
+
+
+def calculate_time_adjustment(species: str, time_of_day: str) -> float:
+    """Calculate time of day adjustment (-4 to +2)."""
+    ideal_ranges = get_species_ideal_ranges(species)
+    ideal_times = ideal_ranges['ideal_times']
+
+    if time_of_day in ideal_times:
+        return 2.0
+    elif time_of_day == 'night':
+        return -2.0
+    else:
+        return -1.0
+
+
+def calculate_pressure_adjustment(pressure: float) -> float:
+    """Calculate barometric pressure adjustment (-3 to +1)."""
+    # Ideal range: 29.8 - 30.2 inHg (or 1009-1023 mb)
+    # Convert if needed - assuming millibars
+    if pressure > 100:  # Likely millibars
+        if 1013 <= pressure <= 1023:
+            return 1.0  # Rising or high
+        elif 1009 <= pressure < 1013:
+            return 0.0  # Normal
+        elif 1000 <= pressure < 1009:
+            return -2.0  # Falling
+        else:
+            return -3.0  # Very low
+    else:  # Likely inHg
+        if 29.8 <= pressure <= 30.2:
+            return 1.0
+        elif 29.5 <= pressure < 29.8:
+            return 0.0
+        else:
+            return -2.0
+
+
+def calculate_structure_adjustment(species: str, zone_id: str, time_of_day: str = 'midday') -> float:
+    """
+    Calculate structure match adjustment based on zone geometry and species preferences.
+    Range: -5 to +5 points.
+
+    CANONICAL ZONE GEOMETRY:
+    - Zone 1 (NW): Old pilings on north edge + concrete rubble (2-4 ft)
+    - Zone 2 (SW): NO structure, open water (2-4 ft)
+    - Zone 3 (NE): Old pilings on north edge (3-6 ft) - MOST FISHED
+    - Zone 4 (SE): Green underwater light only (3-6 ft) - MOST FISHED
+    - Zone 5 (E): Dual pilings (north edge + center line) - STRONGEST STRUCTURE (5-7 ft)
+
+    Args:
+        species: Species key
+        zone_id: Zone identifier (e.g., 'Zone 3')
+        time_of_day: Time of day (for light bonus on Zone 4)
+
+    Returns:
+        Adjustment points (-5 to +5)
+    """
+    adjustment = 0.0
+
+    # Extract zone number
+    zone_num = int(zone_id.split()[-1]) if 'Zone' in zone_id else 3
+
+    # Structure-dependent species (sheepshead, tripletail, blue crab)
+    if species in ['sheepshead', 'tripletail', 'blue_crab']:
+        if zone_num == 5:
+            adjustment += 5.0  # Dual pilings - strongest structure
+        elif zone_num in [1, 3]:
+            adjustment += 3.0  # Single piling line
+        elif zone_num == 4:
+            adjustment += 0.0  # Light only, minimal structure
+        elif zone_num == 2:
+            adjustment -= 5.0  # NO structure - avoid
+
+    # Bottom feeders that love rubble (flounder, black_drum)
+    elif species in ['flounder', 'black_drum']:
+        if zone_num == 1:
+            adjustment += 4.0  # Rubble bonus + pilings
+        elif zone_num in [4, 5]:
+            adjustment += 2.0  # Deeper zones, good bottom
+        elif zone_num == 2:
+            adjustment -= 2.0  # Open water, less ideal
+
+    # Shallow structure lovers (redfish)
+    elif species == 'redfish':
+        if zone_num == 1:
+            adjustment += 4.0  # Shallow + structure + rubble
+        elif zone_num in [2, 3]:
+            adjustment += 2.0  # Shallow to mid
+        elif zone_num in [4, 5]:
+            adjustment += 0.0  # Neutral, less preferred depth
+
+    # Light structure species (speckled trout)
+    elif species == 'speckled_trout':
+        if zone_num == 3:
+            adjustment += 3.0  # Pilings + most fished (high confidence)
+        elif zone_num == 4:
+            adjustment += 2.0  # Mid-depth + most fished
+        elif zone_num == 2:
+            adjustment += 1.0  # Open water acceptable
+        elif zone_num == 5:
+            adjustment -= 1.0  # Too deep/heavy structure
+
+    # Deep water species (white_trout, croaker, jack_crevalle, mackerel, shark, stingray)
+    elif species in ['white_trout', 'croaker', 'jack_crevalle', 'mackerel', 'shark', 'stingray']:
+        if zone_num == 5:
+            adjustment += 4.0  # Deepest zone preferred
+        elif zone_num == 4:
+            adjustment += 2.0  # Mid-deep acceptable
+        elif zone_num == 3:
+            adjustment += 0.0  # Neutral
+        elif zone_num in [1, 2]:
+            adjustment -= 3.0  # Too shallow
+
+    # Shallow open water (mullet)
+    elif species == 'mullet':
+        if zone_num == 2:
+            adjustment += 4.0  # Open water, no structure - perfect
+        elif zone_num == 1:
+            adjustment += 2.0  # Shallow acceptable
+        elif zone_num in [3, 4]:
+            adjustment -= 1.0  # Deeper, less ideal
+        elif zone_num == 5:
+            adjustment -= 3.0  # Too deep
+
+    # Default: slight preference for mid-zones (most fished)
+    else:
+        if zone_num in [3, 4]:
+            adjustment += 1.0  # Most fished, higher confidence
+        elif zone_num == 5:
+            adjustment -= 1.0  # Less data
+
+    # NIGHTTIME LIGHT BONUS for Zone 4
+    if zone_num == 4 and time_of_day in ['evening', 'night']:
+        adjustment += 3.0  # Green light attracts bait and predators
+
+    # Clamp to range
+    return max(-5.0, min(5.0, adjustment))
+
+
+def get_env_breakdown(species: str, conditions: Dict[str, Any]) -> Dict[str, str]:
+    """Get human-readable breakdown of environmental factors."""
+    breakdown = {}
+
+    water_temp = conditions.get('water_temperature')
+    if water_temp:
+        breakdown['water_temp'] = f"{water_temp}°F"
+
+    tide_stage = conditions.get('tide_stage', 'unknown')
+    breakdown['tide'] = tide_stage
+
+    wind_speed = conditions.get('wind_speed', 0)
+    breakdown['wind'] = f"{wind_speed} mph"
+
+    time_of_day = conditions.get('time_of_day', 'unknown')
+    breakdown['time'] = time_of_day
+
+    return breakdown
+
+
+def get_recent_catches_count(db: Session, species: str, zone_id: str, hours_back: int) -> int:
+    """Get count of recent catches for display."""
+    now = datetime.utcnow()
+    cutoff = now - timedelta(hours=hours_back)
+
+    try:
+        count = db.query(Catch).filter(
+            Catch.species == species,
+            Catch.zone_id == zone_id,
+            Catch.timestamp >= cutoff
+        ).count()
+        return count
+    except:
+        return 0
+
+
+def get_recent_predators(db: Session, zone_id: str, hours_back: int) -> List[Dict]:
+    """Get list of recent predators for display."""
+    now = datetime.utcnow()
+    cutoff = now - timedelta(hours=hours_back)
+
+    try:
+        predators = db.query(PredatorLog).filter(
+            PredatorLog.zone == zone_id,
+            PredatorLog.time >= cutoff
+        ).all()
+
+        return [{
+            'type': p.predator,
+            'behavior': p.behavior,
+            'hours_ago': round((now - p.time).total_seconds() / 3600, 1)
+        } for p in predators]
+    except:
+        return []
+
+
+def get_baseline_label(baseline: float) -> str:
+    """Get label for seasonal baseline score."""
+    if baseline >= 85:
+        return "Excellent"
+    elif baseline >= 70:
+        return "Great"
+    elif baseline >= 50:
+        return "Good"
+    elif baseline >= 30:
+        return "Fair"
+    elif baseline >= 15:
+        return "Poor"
+    else:
+        return "N/A"

@@ -1,0 +1,1189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BayScan - Mobile Bay Fishing Forecast</title>
+
+    <!-- Favicons -->
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/favicon-16x16.png">
+
+    <!-- Apple Touch Icon (iOS home screen) -->
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png">
+
+    <!-- Android Chrome -->
+    <link rel="icon" type="image/png" sizes="192x192" href="/static/android-chrome-192x192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="/static/android-chrome-512x512.png">
+
+    <!-- Web App Manifest -->
+    <link rel="manifest" href="/static/site.webmanifest">
+
+    <!-- Leaflet.js CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+          crossorigin=""/>
+
+    <!-- Leaflet Velocity CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-velocity@1.9.0/dist/leaflet-velocity.min.css">
+
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/dark-theme.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <img src="/static/logo.png" alt="BayScan" class="logo">
+        </header>
+
+        <!-- Popover Backdrop -->
+        <div class="popover-backdrop" id="popoverBackdrop"></div>
+
+        <!-- Conditions Summary Popover -->
+        <div class="conditions-popover" id="conditionsPopover" style="display: none;">
+            <div class="popover-header">
+                <h3>Fishing Conditions</h3>
+                <button class="close-popover" id="closePopover">×</button>
+            </div>
+            <div class="popover-content">
+                <!-- 1. Two-sentence summary -->
+                <div class="summary-text" id="summaryText">
+                    Loading conditions...
+                </div>
+
+                <!-- 2. Expected Depth -->
+                <div class="depth-info" id="depthInfo" style="display: none;">
+                    <h4>Expected Depth</h4>
+                    <div class="depth-details">
+                        <div class="depth-species"><strong id="depthSpecies">--</strong></div>
+                        <div class="depth-range">Depth: <span id="depthRange">--</span></div>
+                        <div class="depth-note" id="depthNote">--</div>
+                    </div>
+                </div>
+
+                <!-- 3. Best Zones -->
+                <div class="best-zones-info" id="bestZonesInfo" style="display: none;">
+                    <h4>🎯 Best Zones Right Now</h4>
+                    <div class="zones-list" id="zonesList"></div>
+
+                    <!-- Zone Map Reference -->
+                    <div class="zone-map-reference">
+                        <img src="/static/ZONE MAP.png" alt="Fishing Zone Map" class="popover-zone-map">
+                        <p class="zone-map-caption">Reference map for zone locations</p>
+                    </div>
+                </div>
+
+                <!-- 4. Rig of the Moment -->
+                <div class="rig-info" id="rigInfo" style="display: none;">
+                    <h4>🎣 Rig of the Moment</h4>
+                    <div class="rig-recommendation" id="rigRecommendation">--</div>
+                </div>
+
+                <!-- 5. Current Strength -->
+                <div class="current-strength-info" id="currentStrengthInfo" style="display: none;">
+                    <h4>🌊 Current Strength</h4>
+                    <div class="current-strength-meter">
+                        <div class="strength-label" id="strengthLabel">--</div>
+                        <div class="strength-bar">
+                            <div class="strength-fill" id="strengthFill"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 6. Water Clarity -->
+                <div class="clarity-info" id="clarityInfo" style="display: none;">
+                    <h4>💧 Water Clarity</h4>
+                    <div class="clarity-status" id="clarityStatus">--</div>
+                    <div class="clarity-tip" id="clarityTip">--</div>
+                </div>
+
+                <!-- 7. Best Bait -->
+                <div class="best-bait-info" id="bestBaitInfo" style="display: none;">
+                    <h4>🎣 Best Bait Right Now</h4>
+                    <div class="best-bait-text" id="bestBaitText">--</div>
+                </div>
+
+                <!-- 8. Pro Tip -->
+                <div class="pro-tip-info" id="proTipInfo" style="display: none;">
+                    <h4>💡 Pro Tip</h4>
+                    <div class="pro-tip-text" id="proTipText">--</div>
+                </div>
+
+                <!-- 9. Top Active Species -->
+                <div class="top-species-list" id="topSpeciesList" style="display: none;">
+                    <h4>🔥 Top Active Species</h4>
+                    <div id="topSpeciesItems"></div>
+                </div>
+
+                <!-- 10. Moon/Tide Window -->
+                <div class="moon-tide-info" id="moonTideInfo" style="display: none;">
+                    <h4>🌙 Moon & Tide Window</h4>
+                    <div class="moon-tide-text" id="moonTideText">--</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Navigation (Fixed to bottom) -->
+        <nav class="tab-nav">
+            <button class="tab-button active" data-tab="overview">
+                <span class="tab-icon">🎯</span>
+                <span class="tab-label">Now</span>
+            </button>
+            <button class="tab-button" data-tab="fishinglog">
+                <span class="tab-icon">📝</span>
+                <span class="tab-label">Log</span>
+            </button>
+            <button class="tab-button" data-tab="weeklysummary">
+                <span class="tab-icon">📈</span>
+                <span class="tab-label">Weekly</span>
+            </button>
+            <button class="tab-button" data-tab="alerts" id="alertsTab" style="display: none;">
+                <span class="tab-icon">🔔</span>
+                <span class="tab-label">Alerts</span>
+                <span class="alert-badge" id="alertBadge" style="display: none;">0</span>
+            </button>
+        </nav>
+
+        <!-- Tab Content -->
+        <div class="tab-content">
+
+            <!-- Overview Tab -->
+            <div class="tab-pane active" id="overview">
+                <!-- Current Conditions Panel -->
+                <section class="current-conditions">
+                    <h2>Current Conditions</h2>
+
+                    <!-- Action Buttons -->
+                    <div class="header-buttons">
+                        <button class="conditions-summary-btn" id="conditionsSummaryBtn">
+                            <span class="btn-icon">📍</span>
+                            <span class="btn-text">Summary</span>
+                        </button>
+                    </div>
+
+                    <!-- Conditions Container -->
+                    <div class="conditions-container">
+                        <div class="conditions-grid">
+                            <!-- Tide Section -->
+                            <div class="condition-section">
+                                <div class="section-header-with-value">
+                                    <h3 class="section-title">Tide</h3>
+                                    <span class="tide-state-badge" id="tideState">--</span>
+                                </div>
+                                <div class="section-content">
+                                    <div class="info-row">
+                                        <span class="info-label">Height:</span>
+                                        <span class="info-value"><span id="tideHeight">--</span> ft</span>
+                                    </div>
+                                    <div class="info-row subinfo">
+                                        <span class="info-label">Next High:</span>
+                                        <span class="info-value" id="nextHigh">--</span>
+                                    </div>
+                                    <div class="info-row subinfo">
+                                        <span class="info-label">Next Low:</span>
+                                        <span class="info-value" id="nextLow">--</span>
+                                    </div>
+                                    <div class="info-row">
+                                        <span class="info-label">Current:</span>
+                                        <span class="info-value" id="currentStrength">--</span>
+                                    </div>
+                                    <div class="info-row">
+                                        <span class="info-label">Clarity:</span>
+                                        <span class="info-value" id="clarityValue">--</span>
+                                    </div>
+                                    <div class="info-row">
+                                        <span class="info-label">Moon:</span>
+                                        <span class="info-value" id="moonPhase">--</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Weather Section -->
+                            <div class="condition-section">
+                                <div class="section-header-with-icon">
+                                    <h3 class="section-title">Weather</h3>
+                                    <span class="weather-icon" id="weatherIcon">☀️</span>
+                                </div>
+                                <div class="section-content">
+                                    <div class="info-row">
+                                        <span class="info-label">Air Temp:</span>
+                                        <span class="info-value"><span id="airTemp">--</span>°F</span>
+                                    </div>
+                                    <div class="info-row">
+                                        <span class="info-label">Water Temp:</span>
+                                        <span class="info-value"><span id="temperature">--</span>°F</span>
+                                    </div>
+                                    <div class="info-row">
+                                        <span class="info-label">Pressure:</span>
+                                        <span class="info-value" id="pressureTrend">--</span>
+                                    </div>
+                                    <div class="info-row">
+                                        <span class="info-label">Wind Dir:</span>
+                                        <span class="info-value" id="windDirection">--</span>
+                                    </div>
+                                    <div class="info-row">
+                                        <span class="info-label">Wind Speed:</span>
+                                        <span class="info-value"><span id="windSpeed">--</span> mph</span>
+                                    </div>
+                                    <div class="info-row">
+                                        <span class="info-label">Gusts:</span>
+                                        <span class="info-value"><span id="windGusts">--</span> mph</span>
+                                    </div>
+                                    <div class="info-row">
+                                        <span class="info-label">Cloud Cover:</span>
+                                        <span class="info-value" id="cloudCover">--</span>
+                                    </div>
+                                    <div class="info-row">
+                                        <span class="info-label">Conditions:</span>
+                                        <span class="info-value" id="conditions">--</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 24-Hour Hourly Outlook Strip -->
+                    <div class="hourly-outlook-strip">
+                        <h3>Next 24 Hours</h3>
+                        <div class="hourly-strip-container" id="hourlyStripContainer">
+                            <div class="hourly-loading">Loading outlook...</div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Fish Behavior Today Summary -->
+                <section class="fish-behavior-section">
+                    <h2>🐟 Fish Behavior Today</h2>
+                    <div class="behavior-summary-card">
+                        <div id="fishBehaviorSummary" class="behavior-summary-text">
+                            <p class="loading-text">Loading behavior summary...</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Species Panel with Fish/Bait Tabs -->
+                <section class="species-panel">
+                    <h2>Species Forecast (Now)</h2>
+
+                    <!-- Fish/Bait Tab System -->
+                    <div class="forecast-tabs">
+                        <button class="forecast-tab active" data-forecast-tab="fish">Fish</button>
+                        <button class="forecast-tab" data-forecast-tab="bait">Bait</button>
+                    </div>
+
+                    <!-- Fish Tab Content (default visible) -->
+                    <div id="fishTabContent" class="forecast-tab-content active">
+                        <div id="speciesList" class="species-grid">
+                            <!-- Species cards will be inserted here -->
+                        </div>
+                    </div>
+
+                    <!-- Bait Tab Content (hidden by default) -->
+                    <div id="baitTabContent" class="forecast-tab-content">
+                        <div id="baitList" class="species-grid">
+                            <!-- Bait cards will be inserted here -->
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Live Bay Currents Map (DISABLED - keep for potential redeployment) -->
+                <section class="currents-map-section" style="display: none;">
+                    <div class="section-header">
+                        <h2>🌊 Live Bay Currents</h2>
+                        <div class="map-controls">
+                            <button id="toggleCurrents" class="map-control-btn active">
+                                <span class="btn-icon">👁️</span>
+                                <span class="btn-text">Hide Currents</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="map-container">
+                        <div id="currentsMap" class="currents-map"></div>
+                        <div id="mapLoader" class="map-loader">
+                            <div class="spinner"></div>
+                            <p>Loading currents map...</p>
+                        </div>
+                    </div>
+                    <div class="map-info">
+                        <p><strong>🎣 Red arrow:</strong> Current at your dock (Belle Fontaine)</p>
+                        <p><strong>Cyan arrows:</strong> Currents at other Mobile Bay locations</p>
+                        <p><strong>Nautical overlay:</strong> Navigation markers and channels from OpenSeaMap</p>
+                        <p><em>Click any arrow to see current speed (m/s & knots) and direction</em></p>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Alerts Tab -->
+            <div class="tab-pane" id="alerts">
+                <section class="alerts-section">
+                    <h2>🎣 Active Fishing Alerts</h2>
+                    <div id="alertsList" class="alerts-list">
+                        <div class="no-alerts">No active alerts at this time</div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Fishing Log Tab -->
+            <div class="tab-pane" id="fishinglog">
+                <section class="fishing-log-section">
+                    <div class="log-header">
+                        <h2>📝 Fishing Log</h2>
+                        <button id="zoneMapModalBtn" class="zone-map-modal-btn">Zone Map</button>
+                    </div>
+
+                    <!-- Zone Map Modal (hidden by default) -->
+                    <div id="zoneMapModal" class="zone-map-modal" style="display: none;">
+                        <div class="zone-map-modal-content">
+                            <button class="zone-map-modal-close">&times;</button>
+                            <h3>🗺️ Fishing Zone Map</h3>
+                            <p class="zone-map-description">Reference this map when selecting your fishing zone</p>
+                            <img src="/static/ZONE MAP.png" alt="Fishing Zone Map" class="zone-map-image">
+                        </div>
+                    </div>
+
+                    <!-- Logging Sub-Tabs -->
+                    <div class="logging-subtabs">
+                        <button class="logging-subtab active" data-tab="fish">Fish</button>
+                        <button class="logging-subtab" data-tab="bait">Bait</button>
+                        <button class="logging-subtab" data-tab="predators">Predators</button>
+                    </div>
+
+                    <!-- Fish Logging Tab Content -->
+                    <div class="logging-tab-content" id="fishLogContent">
+                        <!-- New Catch Form -->
+                        <div class="new-catch-card">
+                        <h3>Log New Catch</h3>
+
+                        <!-- Success/Error Messages -->
+                        <div id="catchFormMessage" class="form-message" style="display: none;"></div>
+
+                        <!-- Catch Form -->
+                        <form id="catchForm" class="catch-form">
+                            <div class="form-grid condensed">
+                                <!-- 1. Species (REQUIRED) -->
+                                <div class="form-field">
+                                    <label for="catchSpecies">Species <span class="required">*</span></label>
+                                    <select id="catchSpecies" name="species" required>
+                                        <option value="">Select species...</option>
+                                        <option value="speckled_trout">Speckled Trout</option>
+                                        <option value="redfish">Redfish</option>
+                                        <option value="black_drum">Black Drum</option>
+                                        <option value="flounder">Flounder</option>
+                                        <option value="sheepshead">Sheepshead</option>
+                                        <option value="stingray">Stingray</option>
+                                        <option value="mullet">Mullet</option>
+                                        <option value="croaker">Croaker</option>
+                                        <option value="tripletail">Tripletail (Blackfish)</option>
+                                        <option value="white_trout">White Trout</option>
+                                        <option value="blue_crab">Blue Crab</option>
+                                        <option value="jack_crevalle">Jack Crevalle</option>
+                                        <option value="mackerel">Mackerel</option>
+                                        <option value="shark">Shark</option>
+                                    </select>
+                                </div>
+
+                                <!-- 2. Size Class (REQUIRED) -->
+                                <div class="form-field">
+                                    <label>Size Class <span class="required">*</span></label>
+                                    <div class="size-buttons-compact">
+                                        <button type="button" class="size-btn-compact" data-size="small">Small</button>
+                                        <button type="button" class="size-btn-compact" data-size="keeper">Keeper</button>
+                                        <button type="button" class="size-btn-compact" data-size="big">Big</button>
+                                    </div>
+                                    <input type="hidden" id="sizeBucket" name="size_bucket" required>
+                                </div>
+
+                                <!-- 3. Time -->
+                                <div class="form-field">
+                                    <label for="catchTime">Time</label>
+                                    <input type="datetime-local" id="catchTime" name="timestamp">
+                                </div>
+
+                                <!-- 4. Zone -->
+                                <div class="form-field">
+                                    <label for="zoneId">Zone</label>
+                                    <select id="zoneId" name="zone_id">
+                                        <option value="">Select zone...</option>
+                                        <option value="Zone 1">Zone 1 - NW: Pilings + Rubble (2-4 ft)</option>
+                                        <option value="Zone 2">Zone 2 - SW: Open Water (2-4 ft)</option>
+                                        <option value="Zone 3">Zone 3 - NE: Pilings (3-6 ft)</option>
+                                        <option value="Zone 4">Zone 4 - SE: Green Light (3-6 ft)</option>
+                                        <option value="Zone 5">Zone 5 - E: Dual Pilings (5-7 ft)</option>
+                                    </select>
+                                </div>
+
+                                <!-- 5. Length -->
+                                <div class="form-field">
+                                    <label for="catchLength">Length (in)</label>
+                                    <input type="number" id="catchLength" name="size_length_in" min="1" max="99" placeholder="Optional">
+                                </div>
+
+                                <!-- 6. Bait -->
+                                <div class="form-field">
+                                    <label for="baitUsed">Bait</label>
+                                    <select id="baitUsed" name="bait_used">
+                                        <option value="">Select bait...</option>
+                                        <option value="live fish">Live Fish</option>
+                                        <option value="live shrimp">Live Shrimp</option>
+                                        <option value="cut bait">Cut Bait</option>
+                                        <option value="frozen shrimp">Frozen Shrimp</option>
+                                        <option value="frozen fish">Frozen Fish</option>
+                                        <option value="sandflea">Sandflea</option>
+                                        <option value="lure">Lure</option>
+                                        <option value="cast net">Cast Net</option>
+                                        <option value="trap">Trap</option>
+                                    </select>
+                                </div>
+
+                                <!-- 7. Rig (renamed from Presentation) -->
+                                <div class="form-field">
+                                    <label for="presentation">Rig</label>
+                                    <select id="presentation" name="presentation">
+                                        <option value="">Select...</option>
+                                        <option value="jig">Jig</option>
+                                        <option value="cork">Cork</option>
+                                        <option value="carolina">Carolina rig</option>
+                                        <option value="free-lined">Free-lined</option>
+                                        <option value="topwater">Topwater</option>
+                                        <option value="bottom rig">Bottom rig</option>
+                                        <option value="cast net">Cast net</option>
+                                        <option value="trap">Trap</option>
+                                    </select>
+                                </div>
+
+                                <!-- 7b. Days Since Last Checked (conditional - only for traps) -->
+                                <div class="form-field" id="fishDaysSinceField" style="display: none;">
+                                    <label for="fishDaysSince">Days Since Last Checked <span class="required">*</span></label>
+                                    <input type="number" id="fishDaysSince" name="days_since_last_checked" min="1" max="30" placeholder="Days">
+                                </div>
+
+                                <!-- 8. Quantity -->
+                                <div class="form-field">
+                                    <label for="quantity">Qty</label>
+                                    <select id="quantity" name="quantity">
+                                        <option value="1">1</option>
+                                        <option value="2">2</option>
+                                        <option value="3">3</option>
+                                        <option value="4">4</option>
+                                        <option value="5">5</option>
+                                        <option value="6">6</option>
+                                        <option value="7">7</option>
+                                        <option value="8">8</option>
+                                        <option value="9">9</option>
+                                        <option value="10">10</option>
+                                        <option value="11">11</option>
+                                        <option value="12">12</option>
+                                        <option value="13">13</option>
+                                        <option value="14">14</option>
+                                        <option value="15">15</option>
+                                        <option value="16">16</option>
+                                        <option value="17">17</option>
+                                        <option value="18">18</option>
+                                        <option value="19">19</option>
+                                        <option value="20">20</option>
+                                    </select>
+                                </div>
+
+                                <!-- 9. Kept/Released -->
+                                <div class="form-field">
+                                    <label>Kept/Released</label>
+                                    <div class="toggle-buttons-compact">
+                                        <button type="button" class="toggle-btn-compact" data-kept="false">Released</button>
+                                        <button type="button" class="toggle-btn-compact active" data-kept="true">Kept</button>
+                                    </div>
+                                    <input type="hidden" id="keptInput" name="kept" value="true">
+                                </div>
+
+                                <!-- 10. Notes (full width) -->
+                                <div class="form-field full-width">
+                                    <label for="notes">Notes</label>
+                                    <textarea id="notes" name="notes" rows="2" placeholder="Optional details..."></textarea>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn-primary log-catch-btn">Log Catch</button>
+                        </form>
+                    </div>
+
+                    <!-- Recent Catches -->
+                    <div class="recent-catches-card">
+                        <h3>Recent Catches</h3>
+                        <div id="catchesList" class="catches-list">
+                            <p class="loading-text">Loading catches...</p>
+                        </div>
+                    </div>
+
+                        <!-- Stats Summary (Optional) -->
+                        <div class="stats-summary-card">
+                            <h3>Last 30 Days</h3>
+                            <div id="statsContent">
+                                <p class="loading-text">Loading stats...</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bait Logging Tab Content -->
+                    <div class="logging-tab-content" id="baitLogContent" style="display: none;">
+                        <!-- Bait Log Form -->
+                        <div class="new-catch-card">
+                            <h3>Log Bait Caught</h3>
+
+                            <!-- Success/Error Messages -->
+                            <div id="baitFormMessage" class="form-message" style="display: none;"></div>
+
+                            <!-- Bait Form -->
+                            <form id="baitForm" class="catch-form">
+                                <div class="form-grid condensed">
+                                    <!-- 1. Species (REQUIRED) -->
+                                    <div class="form-field">
+                                        <label for="baitSpecies">Species <span class="required">*</span></label>
+                                        <select id="baitSpecies" name="bait_species" required>
+                                            <option value="">Select bait...</option>
+                                            <option value="live_shrimp">Shrimp</option>
+                                            <option value="menhaden">Menhaden</option>
+                                            <option value="mud_minnows">Mud Minnows</option>
+                                            <option value="pinfish">Pinfish</option>
+                                            <option value="fiddler_crabs">Fiddler Crabs</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- 2. Zone (REQUIRED) -->
+                                    <div class="form-field">
+                                        <label for="baitZone">Zone <span class="required">*</span></label>
+                                        <select id="baitZone" name="zone_id" required>
+                                            <option value="">Select zone...</option>
+                                            <option value="Zone 1">Zone 1 - NW: Pilings + Rubble (2-4 ft)</option>
+                                            <option value="Zone 2">Zone 2 - SW: Open Water (2-4 ft)</option>
+                                            <option value="Zone 3">Zone 3 - NE: Pilings (3-6 ft)</option>
+                                            <option value="Zone 4">Zone 4 - SE: Green Light (3-6 ft)</option>
+                                            <option value="Zone 5">Zone 5 - E: Dual Pilings (5-7 ft)</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- 3. Time -->
+                                    <div class="form-field">
+                                        <label for="baitTime">Time</label>
+                                        <input type="datetime-local" id="baitTime" name="timestamp">
+                                    </div>
+
+                                    <!-- 4. Quantity -->
+                                    <div class="form-field">
+                                        <label for="quantityEstimate">Qty</label>
+                                        <select id="quantityEstimate" name="quantity_estimate">
+                                            <option value="">Select...</option>
+                                            <option value="none">None</option>
+                                            <option value="few">Few</option>
+                                            <option value="plenty">Plenty</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- 5. Method -->
+                                    <div class="form-field">
+                                        <label for="baitMethod">Method</label>
+                                        <select id="baitMethod" name="method">
+                                            <option value="">Select...</option>
+                                            <option value="cast net">Cast Net</option>
+                                            <option value="minnow trap">Minnow Trap</option>
+                                            <option value="pinfish trap">Pinfish Trap</option>
+                                            <option value="hand catch">Hand Catch</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- 5b. Days Since Last Checked (conditional - only for traps) -->
+                                    <div class="form-field" id="baitDaysSinceField" style="display: none;">
+                                        <label for="baitDaysSince">Days Since Last Checked <span class="required">*</span></label>
+                                        <input type="number" id="baitDaysSince" name="days_since_last_checked" min="1" max="30" placeholder="Days">
+                                    </div>
+
+                                    <!-- 6. Structure -->
+                                    <div class="form-field">
+                                        <label for="baitStructure">Structure</label>
+                                        <select id="baitStructure" name="structure_type">
+                                            <option value="">Select...</option>
+                                            <option value="pilings">Pilings</option>
+                                            <option value="grass edge">Grass Edge</option>
+                                            <option value="open sand">Open Sand</option>
+                                            <option value="channel edge">Channel Edge</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- 7. Notes (full width) -->
+                                    <div class="form-field full-width">
+                                        <label for="baitNotes">Notes</label>
+                                        <textarea id="baitNotes" name="notes" rows="2" placeholder="Optional details..."></textarea>
+                                    </div>
+                                </div>
+
+                                <button type="submit" class="btn-primary log-catch-btn">Log Bait</button>
+                            </form>
+                        </div>
+
+                        <!-- Recent Bait Logs -->
+                        <div class="recent-catches-card">
+                            <h3>Recent Bait Logs</h3>
+                            <div id="baitLogsList" class="bait-logs-list">
+                                <p class="loading-text">Loading bait logs...</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Predator Logging Tab Content -->
+                    <div class="logging-tab-content" id="predatorLogContent" style="display: none;">
+                        <!-- Predator Log Form -->
+                        <div class="new-catch-card">
+                            <h3>Log Predator Sighting</h3>
+
+                            <!-- Success/Error Messages -->
+                            <div id="predatorFormMessage" class="form-message" style="display: none;"></div>
+
+                            <!-- Predator Form -->
+                            <form id="predatorForm" class="catch-form">
+                                <div class="form-grid condensed">
+                                    <!-- 1. Species (REQUIRED) -->
+                                    <div class="form-field">
+                                        <label for="predatorType">Species <span class="required">*</span></label>
+                                        <select id="predatorType" name="predator" required>
+                                            <option value="">Select predator...</option>
+                                            <option value="dolphin">Dolphin</option>
+                                            <option value="shark">Shark</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- 2. Zone (REQUIRED) -->
+                                    <div class="form-field">
+                                        <label for="predatorZone">Zone <span class="required">*</span></label>
+                                        <select id="predatorZone" name="zone" required>
+                                            <option value="">Select zone...</option>
+                                            <option value="Zone 1">Zone 1 - NW: Pilings + Rubble (2-4 ft)</option>
+                                            <option value="Zone 2">Zone 2 - SW: Open Water (2-4 ft)</option>
+                                            <option value="Zone 3">Zone 3 - NE: Pilings (3-6 ft)</option>
+                                            <option value="Zone 4">Zone 4 - SE: Green Light (3-6 ft)</option>
+                                            <option value="Zone 5">Zone 5 - E: Dual Pilings (5-7 ft)</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- 3. Time -->
+                                    <div class="form-field">
+                                        <label for="predatorTime">Time</label>
+                                        <input type="datetime-local" id="predatorTime" name="time">
+                                    </div>
+
+                                    <!-- 4. Behavior -->
+                                    <div class="form-field">
+                                        <label for="predatorBehavior">Behavior</label>
+                                        <select id="predatorBehavior" name="behavior">
+                                            <option value="">Select behavior...</option>
+                                            <option value="cruising">Cruising</option>
+                                            <option value="feeding">Feeding</option>
+                                            <option value="chasing bait">Chasing Bait</option>
+                                            <option value="busting surface">Busting Surface</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- 5. Notes (full width) -->
+                                    <div class="form-field full-width">
+                                        <label for="predatorNotes">Notes</label>
+                                        <textarea id="predatorNotes" name="notes" rows="2" placeholder="Optional details..."></textarea>
+                                    </div>
+                                </div>
+
+                                <button type="submit" class="btn-primary log-catch-btn">Log Predator</button>
+                            </form>
+                        </div>
+
+                        <!-- Recent Predator Logs -->
+                        <div class="recent-catches-card">
+                            <h3>Recent Predator Activity</h3>
+                            <div id="predatorLogsList" class="predator-logs-list">
+                                <p class="loading-text">Loading predator logs...</p>
+                            </div>
+                        </div>
+                    </div>
+
+                </section>
+            </div>
+
+            <!-- Weekly Summary Tab -->
+            <div class="tab-pane" id="weeklysummary">
+                <section class="weekly-summary-section">
+                    <div class="weekly-header">
+                        <h2>📈 Weekly Summary</h2>
+                        <p class="weekly-subtitle">Your fishing insights from the past 7 days</p>
+                    </div>
+
+                    <!-- Total Catches (Hero) -->
+                    <div class="weekly-hero-card">
+                        <div class="hero-stat" id="weeklyTotalCatches">--</div>
+                        <div class="hero-label">Total Catches This Week</div>
+                    </div>
+
+                    <!-- Clear Section Layout -->
+                    <div class="weekly-sections">
+                        <!-- 1. Best Species -->
+                        <div class="weekly-section">
+                            <h3 class="section-title">🏆 Best Species</h3>
+                            <div class="section-content" id="weeklyBestSpeciesSection">
+                                <p class="loading-text">Loading...</p>
+                            </div>
+                        </div>
+
+                        <!-- 2. Best Bait -->
+                        <div class="weekly-section">
+                            <h3 class="section-title">🎣 Best Bait</h3>
+                            <div class="section-content" id="weeklyBestBaitSection">
+                                <p class="loading-text">Loading...</p>
+                            </div>
+                        </div>
+
+                        <!-- 3. Best Zones -->
+                        <div class="weekly-section">
+                            <h3 class="section-title">🗺️ Best Zones</h3>
+                            <div class="section-content" id="weeklyBestZonesSection">
+                                <p class="loading-text">Loading...</p>
+                            </div>
+                        </div>
+
+                        <!-- 4. Best Tide Window -->
+                        <div class="weekly-section">
+                            <h3 class="section-title">🌊 Best Tide Window</h3>
+                            <div class="section-content" id="weeklyBestTideSection">
+                                <p class="loading-text">Loading...</p>
+                            </div>
+                        </div>
+
+                        <!-- 5. Best Time of Day -->
+                        <div class="weekly-section">
+                            <h3 class="section-title">⏰ Best Time of Day</h3>
+                            <div class="section-content" id="weeklyBestTimeSection">
+                                <p class="loading-text">Loading...</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- No Data Message (hidden by default) -->
+                    <div class="no-data-message" id="weeklyNoData" style="display: none;">
+                        <p>No catches logged this week. Start logging your catches to see your weekly summary!</p>
+                    </div>
+                </section>
+            </div>
+
+        </div>
+
+        <!-- Footer -->
+        <footer>
+            <p><strong>BayScan</strong> - Smart Fishing Forecasts | <a href="https://bayscan.app" target="_blank">bayscan.app</a></p>
+            <p>Data sources: NOAA Tides (8735180 Bayou La Batre), NOAA Real-Time Conditions (8736897 Middle Bay), NWS Weather</p>
+            <p>Forecast updates every 15 minutes</p>
+        </footer>
+    </div>
+
+    <!-- Take Me Fishing Mode (Fullscreen Overlay) -->
+    <div class="take-me-fishing-overlay" id="takeMeFishingOverlay" style="display: none;">
+        <div class="tmf-container">
+            <!-- Exit Button -->
+            <button class="tmf-exit-btn" id="tmfExitBtn">
+                <span class="exit-icon">✕</span>
+                <span class="exit-text">Exit</span>
+            </button>
+
+            <!-- Logo/Title -->
+            <div class="tmf-header">
+                <h1 class="tmf-logo">🎣 Take Me Fishing</h1>
+                <p class="tmf-subtitle">Quick reference for right now</p>
+            </div>
+
+            <!-- Main Content Grid -->
+            <div class="tmf-grid">
+                <!-- Bite Tier (Large) -->
+                <div class="tmf-card tmf-tier-card">
+                    <div class="tmf-label">Current Bite</div>
+                    <div class="tmf-tier-badge" id="tmfTier">LOADING</div>
+                </div>
+
+                <!-- Best Zone -->
+                <div class="tmf-card">
+                    <div class="tmf-label">Best Zone</div>
+                    <div class="tmf-value" id="tmfZone">--</div>
+                </div>
+
+                <!-- Best Depth -->
+                <div class="tmf-card">
+                    <div class="tmf-label">Best Depth</div>
+                    <div class="tmf-value" id="tmfDepth">--</div>
+                </div>
+
+                <!-- Best Bait -->
+                <div class="tmf-card">
+                    <div class="tmf-label">Best Bait</div>
+                    <div class="tmf-value" id="tmfBait">--</div>
+                </div>
+
+                <!-- Rig of Moment -->
+                <div class="tmf-card tmf-rig-card">
+                    <div class="tmf-label">Rig of the Moment</div>
+                    <div class="tmf-rig-text" id="tmfRig">--</div>
+                </div>
+            </div>
+
+            <!-- Conditions Summary (Bottom) -->
+            <div class="tmf-summary">
+                <div class="tmf-summary-icon">💡</div>
+                <div class="tmf-summary-text" id="tmfSummary">Loading conditions...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Catch Detail Modal -->
+    <div id="catchDetailModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>
+                    <span id="modalCatchSpecies">Catch Details</span>
+                    <span style="font-size: 0.7em; color: #999; margin-left: 10px;">– <span id="modalCatchSize">Size</span></span>
+                </h2>
+                <span class="modal-close" onclick="closeCatchModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <button class="delete-log-btn" id="deleteCatchBtn" style="margin-bottom: 15px;">Delete This Catch</button>
+                <div class="info-section">
+                    <div class="log-detail-row">
+                        <span class="log-detail-label">Date & Time:</span>
+                        <span class="log-detail-value" id="modalCatchDateTime">--</span>
+                    </div>
+                    <div class="log-detail-row">
+                        <span class="log-detail-label">Zone:</span>
+                        <span class="log-detail-value" id="modalCatchZone">--</span>
+                    </div>
+                    <div class="log-detail-row">
+                        <span class="log-detail-label">Quantity:</span>
+                        <span class="log-detail-value" id="modalCatchQuantity">--</span>
+                    </div>
+                    <div class="log-detail-row">
+                        <span class="log-detail-label">Length:</span>
+                        <span class="log-detail-value" id="modalCatchLength">--</span>
+                    </div>
+                    <div class="log-detail-row">
+                        <span class="log-detail-label">Bait:</span>
+                        <span class="log-detail-value" id="modalCatchBait">--</span>
+                    </div>
+                    <div class="log-detail-row">
+                        <span class="log-detail-label">Rig:</span>
+                        <span class="log-detail-value" id="modalCatchRig">--</span>
+                    </div>
+                    <div class="log-detail-row">
+                        <span class="log-detail-label">Status:</span>
+                        <span class="log-detail-value" id="modalCatchKept">--</span>
+                    </div>
+                    <div class="log-detail-row">
+                        <span class="log-detail-label">Notes:</span>
+                        <span class="log-detail-value" id="modalCatchNotes">--</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bait Detail Modal -->
+    <div id="baitDetailModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalBaitLogSpecies">Bait Log Details</h2>
+                <span class="modal-close" onclick="closeBaitDetailModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <button class="delete-log-btn" id="deleteBaitLogBtn" style="margin-bottom: 15px;">Delete This Bait Log</button>
+                <div class="info-section">
+                    <div class="log-detail-row">
+                        <span class="log-detail-label">Date & Time:</span>
+                        <span class="log-detail-value" id="modalBaitDateTime">--</span>
+                    </div>
+                    <div class="log-detail-row">
+                        <span class="log-detail-label">Zone:</span>
+                        <span class="log-detail-value" id="modalBaitZone">--</span>
+                    </div>
+                    <div class="log-detail-row">
+                        <span class="log-detail-label">Quantity:</span>
+                        <span class="log-detail-value" id="modalBaitQuantity">--</span>
+                    </div>
+                    <div class="log-detail-row">
+                        <span class="log-detail-label">Method:</span>
+                        <span class="log-detail-value" id="modalBaitMethod">--</span>
+                    </div>
+                    <div class="log-detail-row">
+                        <span class="log-detail-label">Structure:</span>
+                        <span class="log-detail-value" id="modalBaitStructure">--</span>
+                    </div>
+                    <div class="log-detail-row">
+                        <span class="log-detail-label">Notes:</span>
+                        <span class="log-detail-value" id="modalBaitLogNotes">--</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Predator Detail Modal -->
+    <div id="predatorDetailModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalPredatorType">Predator Log Details</h2>
+                <span class="modal-close" onclick="closePredatorDetailModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <button class="delete-log-btn" id="deletePredatorLogBtn" style="margin-bottom: 15px;">Delete This Predator Log</button>
+                <div class="info-section">
+                    <div class="log-detail-row">
+                        <span class="log-detail-label">Date & Time:</span>
+                        <span class="log-detail-value" id="modalPredatorDateTime">--</span>
+                    </div>
+                    <div class="log-detail-row">
+                        <span class="log-detail-label">Zone:</span>
+                        <span class="log-detail-value" id="modalPredatorZone">--</span>
+                    </div>
+                    <div class="log-detail-row">
+                        <span class="log-detail-label">Behavior:</span>
+                        <span class="log-detail-value" id="modalPredatorBehavior">--</span>
+                    </div>
+                    <div class="log-detail-row">
+                        <span class="log-detail-label">Tide:</span>
+                        <span class="log-detail-value" id="modalPredatorTide">--</span>
+                    </div>
+                    <div class="log-detail-row">
+                        <span class="log-detail-label">Notes:</span>
+                        <span class="log-detail-value" id="modalPredatorNotes">--</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Species Info Modal -->
+    <div id="speciesModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>
+                    <span id="modalSpeciesName">Species Info</span>
+                    <span id="modalRegulations" style="font-size: 0.6em; color: #666; margin-left: 15px;"></span>
+                </h2>
+                <span class="modal-close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <!-- Behavior Cheat Sheet Section (NEW) -->
+                <div class="info-section behavior-cheatsheet">
+                    <h3>📋 Behavior Cheat Sheet</h3>
+
+                    <!-- Behavior Summary -->
+                    <div class="behavior-summary" id="modalBehaviorSummary">
+                        <p>Loading behavior info...</p>
+                    </div>
+
+                    <!-- Quick Stats Grid -->
+                    <div class="behavior-grid">
+                        <!-- Best Zones -->
+                        <div class="behavior-card">
+                            <h4>🗺️ Best Zones</h4>
+                            <div class="behavior-zones" id="modalBestZones">--</div>
+                        </div>
+
+                        <!-- Best Tide -->
+                        <div class="behavior-card">
+                            <h4>🌊 Best Tide</h4>
+                            <div class="behavior-text" id="modalBestTide">--</div>
+                        </div>
+
+                        <!-- Best Depth (Dynamic) -->
+                        <div class="behavior-card">
+                            <h4>📏 Depth Range</h4>
+                            <div class="behavior-depth" id="modalBestDepth">--</div>
+                        </div>
+                    </div>
+
+                    <!-- Zone Map Reference (Collapsible) -->
+                    <div class="modal-zone-map-container">
+                        <button class="zone-map-toggle" id="modalZoneMapToggle">
+                            📍 View Zone Map
+                        </button>
+                        <div class="modal-zone-map-content" id="modalZoneMapContent" style="display: none;">
+                            <img src="/static/ZONE MAP.png" alt="Fishing Zone Map" class="modal-zone-map">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Best Baits Section -->
+                <div class="info-section">
+                    <h3>🎣 Best Baits</h3>
+                    <ul id="modalBaits"></ul>
+                </div>
+
+                <!-- Original Techniques/Rigs/Tips -->
+                <div class="info-section">
+                    <h3>🎯 Techniques</h3>
+                    <ul id="modalTechniques"></ul>
+                </div>
+                <div class="info-section">
+                    <h3>🪝 Recommended Rigs</h3>
+                    <ul id="modalRigs"></ul>
+                </div>
+                <div class="info-section tips">
+                    <h3>💡 Pro Tips</h3>
+                    <p id="modalTips"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bait Detail Modal -->
+    <div id="baitModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>
+                    <span id="modalBaitName">Bait Info</span>
+                    <span id="modalBaitTier" class="tier-badge" style="margin-left: 15px; font-size: 0.7em;"></span>
+                </h2>
+                <span class="modal-close" id="closeBaitModal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <!-- Overview Section -->
+                <div class="info-section">
+                    <h3>📝 Overview</h3>
+                    <p id="modalBaitDescription">Loading...</p>
+                </div>
+
+                <!-- Where to Find Section -->
+                <div class="info-section">
+                    <h3>🗺️ Where to Find</h3>
+                    <div class="bait-zones">
+                        <div id="modalBaitZones">--</div>
+                        <p id="modalBaitZoneNotes" style="margin-top: 10px; font-size: 0.95em; color: #666;"></p>
+                    </div>
+                </div>
+
+                <!-- When Active Section -->
+                <div class="info-section">
+                    <h3>⏰ When Active</h3>
+                    <div class="bait-when-grid">
+                        <div class="bait-when-card">
+                            <h4>🌊 Tide</h4>
+                            <p id="modalBaitTidePreference">--</p>
+                        </div>
+                        <div class="bait-when-card">
+                            <h4>☀️ Time</h4>
+                            <p id="modalBaitTimePreference">--</p>
+                        </div>
+                        <div class="bait-when-card">
+                            <h4>💧 Clarity</h4>
+                            <p id="modalBaitClarityNotes">--</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- How to Catch Section -->
+                <div class="info-section">
+                    <h3>🪝 How to Catch</h3>
+                    <div class="bait-methods">
+                        <div class="method-tags" id="modalBaitMethods"></div>
+                        <ul id="modalBaitHowToCatch" style="margin-top: 15px;"></ul>
+                    </div>
+                </div>
+
+                <!-- Best For Section -->
+                <div class="info-section">
+                    <h3>🎯 Best For (Target Species)</h3>
+                    <div class="bait-best-for" id="modalBaitBestFor">
+                        <!-- Target species tags will be inserted here -->
+                    </div>
+                </div>
+
+                <!-- Tips Section -->
+                <div class="info-section tips">
+                    <h3>💡 Tips</h3>
+                    <ul id="modalBaitTips"></ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hour Forecast Detail Modal -->
+    <div id="hourForecastModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="hourModalTitle">Forecast Details</h2>
+                <span class="modal-close" id="closeHourModal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <!-- Window Tier Badge -->
+                <div class="hour-modal-tier">
+                    <div class="hour-tier-badge-large" id="hourModalTier">LOADING</div>
+                </div>
+
+                <!-- Conditions Grid -->
+                <div class="hour-modal-conditions">
+                    <div class="hour-condition-card">
+                        <h4>🌊 Tide</h4>
+                        <div class="condition-value" id="hourModalTide">--</div>
+                        <div class="condition-subvalue" id="hourModalTideHeight">--</div>
+                    </div>
+                    <div class="hour-condition-card">
+                        <h4>☀️ Time of Day</h4>
+                        <div class="condition-value" id="hourModalTimeOfDay">--</div>
+                    </div>
+                    <div class="hour-condition-card">
+                        <h4>🌡️ Temperature</h4>
+                        <div class="condition-value" id="hourModalTemp">--</div>
+                    </div>
+                    <div class="hour-condition-card">
+                        <h4>💨 Wind</h4>
+                        <div class="condition-value" id="hourModalWind">--</div>
+                    </div>
+                    <div class="hour-condition-card">
+                        <h4>📊 Pressure</h4>
+                        <div class="condition-value" id="hourModalPressure">--</div>
+                    </div>
+                    <div class="hour-condition-card">
+                        <h4>☁️ Conditions</h4>
+                        <div class="condition-value" id="hourModalConditions">--</div>
+                    </div>
+                </div>
+
+                <!-- Top Species -->
+                <div class="hour-modal-species">
+                    <h3>🎣 Top Species</h3>
+                    <div id="hourModalSpeciesList" class="hour-species-list">
+                        <!-- Species will be inserted here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Learning Notes Modal -->
+    <div id="learningNotesModal" class="learning-notes-modal" style="display: none;">
+        <div class="learning-notes-modal-content">
+            <button class="learning-notes-close">&times;</button>
+            <h3 id="learningNotesTitle">Learning Notes</h3>
+            <div id="learningNotesContent" class="learning-notes-body">
+                <!-- Content will be loaded dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Leaflet.js JavaScript -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+            crossorigin=""></script>
+
+    <!-- Leaflet Velocity JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/leaflet-velocity@1.9.0/dist/leaflet-velocity.min.js"></script>
+
+    <script src="/static/js/timezone.js"></script>
+    <script src="/static/js/tooltips.js"></script>
+    <script src="/static/js/skeleton-loader.js"></script>
+    <script src="/static/js/dashboard.js"></script>
+    <script src="/static/js/fishing_log.js"></script>
+    <script src="/static/js/logging_tabs.js"></script>
+    <script src="/static/js/bait_forecast.js"></script>
+    <script src="/static/js/weekly_summary.js"></script>
+    <script src="/static/js/take_me_fishing.js"></script>
+</body>
+</html>

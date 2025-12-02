@@ -1,0 +1,316 @@
+"""
+Bait activity scoring service.
+Calculates activity scores for bait species based on environmental conditions.
+"""
+
+from typing import Dict, List, Optional
+from app.rules.bait_profiles import BAIT_SPECIES, BAIT_PROFILES, get_bait_display_name
+
+
+def calculate_bait_activity_score(
+    bait_key: str,
+    tide_state: str,
+    tide_rate: float,
+    current_strength: str,
+    clarity: str,
+    time_of_day: str,
+    wind_speed: float,
+    zone: Optional[int] = None
+) -> float:
+    """
+    Calculate activity score for a bait species (0-100).
+
+    Args:
+        bait_key: Bait species key (e.g., "live_shrimp")
+        tide_state: Current tide state ("rising", "falling", "slack")
+        tide_rate: Rate of tide change (ft/hr)
+        current_strength: Current strength classification ("weak", "moderate", "strong")
+        clarity: Water clarity ("clear", "lightly_stained", "muddy")
+        time_of_day: Time period ("dawn", "day", "dusk", "night")
+        wind_speed: Wind speed in mph
+        zone: Optional zone number (1-5) for zone preference scoring
+
+    Returns:
+        Activity score from 0-100
+    """
+    profile = BAIT_PROFILES.get(bait_key)
+    if not profile:
+        return 50.0  # Default moderate score for unknown bait
+
+    weights = profile.get("weights", {})
+    preferences = profile.get("preferences", {})
+
+    # Initialize sub-scores
+    tide_score = 0.0
+    current_score = 0.0
+    clarity_score = 0.0
+    time_score = 0.0
+    zone_score = 0.0
+
+    # 1. Tide Movement Score
+    tide_weight = weights.get("tide_movement", 0.25)
+    preferred_tides = preferences.get("tide_states", [])
+
+    if tide_state in preferred_tides:
+        tide_score = 1.0
+    elif tide_state == "slack" and "slack" not in preferred_tides:
+        tide_score = 0.3  # Lower score for slack if not preferred
+    else:
+        tide_score = 0.5  # Partial score for non-preferred but moving
+
+    # Adjust by tide rate (stronger movement = better for most bait)
+    if abs(tide_rate) > 0.5:
+        tide_score = min(1.0, tide_score + 0.2)
+
+    # 2. Current Strength Score
+    current_weight = weights.get("current_strength", 0.25)
+    preferred_currents = preferences.get("current_strength", [])
+
+    if current_strength in preferred_currents:
+        current_score = 1.0
+    elif current_strength == "weak" and "weak" not in preferred_currents:
+        current_score = 0.4
+    elif current_strength == "strong" and "strong" not in preferred_currents:
+        current_score = 0.6
+    else:
+        current_score = 0.7
+
+    # 3. Clarity Score
+    clarity_weight = weights.get("clarity", 0.15)
+    preferred_clarity = preferences.get("clarity", [])
+
+    if clarity in preferred_clarity:
+        clarity_score = 1.0
+    else:
+        clarity_score = 0.5  # Partial score for non-preferred clarity
+
+    # 4. Time of Day Score
+    time_weight = weights.get("time_of_day", 0.15)
+    preferred_times = preferences.get("time_of_day", [])
+
+    if time_of_day in preferred_times:
+        time_score = 1.0
+    else:
+        # Give partial credit for adjacent time periods
+        if time_of_day == "dawn" and "day" in preferred_times:
+            time_score = 0.8
+        elif time_of_day == "dusk" and ("day" in preferred_times or "night" in preferred_times):
+            time_score = 0.8
+        else:
+            time_score = 0.4
+
+    # 5. Zone Preference Score
+    zone_weight = weights.get("zone_preference", 0.10)
+    preferred_zones = preferences.get("zones", [])
+
+    if zone and zone in preferred_zones:
+        zone_score = 1.0
+    elif zone:
+        zone_score = 0.5  # Bait might still be present, just less active
+    else:
+        zone_score = 0.7  # Neutral if no specific zone provided
+
+    # Calculate weighted environmental score
+    total_weight = tide_weight + current_weight + clarity_weight + time_weight + zone_weight
+
+    environmental_score = (
+        (tide_weight * tide_score) +
+        (current_weight * current_score) +
+        (clarity_weight * clarity_score) +
+        (time_weight * time_score) +
+        (zone_weight * zone_score)
+    ) / total_weight
+
+    # Clamp to [0, 1]
+    environmental_score = max(0.0, min(1.0, environmental_score))
+
+    # Wind modifier (high wind can make bait harder to find/catch)
+    wind_modifier = 1.0
+    if wind_speed > 15:
+        wind_modifier = 0.85  # Harder to catch bait in high wind
+    elif wind_speed > 20:
+        wind_modifier = 0.7   # Very difficult in strong wind
+
+    # Final score (0-100)
+    final_score = environmental_score * wind_modifier * 100
+
+    return max(0.0, min(100.0, final_score))
+
+
+def get_bait_tier_from_score(score: float) -> str:
+    """
+    Convert bait activity score to tier label.
+    Uses same thresholds as species tiers.
+
+    Args:
+        score: Activity score (0-100)
+
+    Returns:
+        Tier label: "HOT", "DECENT", "SLOW", or "UNLIKELY"
+    """
+    if score >= 80:
+        return "HOT"
+    elif score >= 50:
+        return "DECENT"
+    elif score >= 20:
+        return "SLOW"
+    else:
+        return "UNLIKELY"
+
+
+def get_bait_summary(
+    bait_key: str,
+    tier: str,
+    zones: List[int],
+    tide_state: str,
+    clarity: str
+) -> str:
+    """
+    Generate a one-line summary for bait activity.
+
+    Args:
+        bait_key: Bait species key
+        tier: Activity tier (HOT/DECENT/SLOW/UNLIKELY)
+        zones: Best zones for this bait right now
+        tide_state: Current tide state
+        clarity: Water clarity
+
+    Returns:
+        Short summary string
+    """
+    profile = BAIT_PROFILES.get(bait_key)
+    display_name = get_bait_display_name(bait_key)
+
+    if not profile:
+        return f"{display_name} activity unknown"
+
+    # Special case for fiddler crabs (not at dock)
+    if bait_key == "fiddler_crabs":
+        if tier == "HOT":
+            return f"Very active on muddy shorelines, {tide_state} tide"
+        elif tier == "DECENT":
+            return f"Active on muddy banks away from dock"
+        elif tier == "SLOW":
+            return f"Low activity on shorelines, check marsh banks"
+        else:
+            return f"Minimal activity, try other bait sources"
+
+    # Build summary based on tier and conditions
+    if tier == "HOT":
+        if len(zones) > 0:
+            zone_str = f"Zones {', '.join(map(str, zones))}"
+            return f"Very active in {zone_str} on {tide_state} tide"
+        else:
+            return f"Very active on {tide_state} tide"
+
+    elif tier == "DECENT":
+        if len(zones) > 0:
+            zone_str = f"Zones {', '.join(map(str, zones))}"
+            return f"Active around {zone_str}, {clarity} water"
+        else:
+            return f"Moderate activity in {clarity} water"
+
+    elif tier == "SLOW":
+        return f"Scattered activity, check shallow areas"
+
+    else:  # UNLIKELY
+        return f"Low activity, try alternate baits"
+
+
+def calculate_all_bait_forecasts(
+    tide_state: str,
+    tide_rate: float,
+    current_strength: str,
+    clarity: str,
+    time_of_day: str,
+    wind_speed: float
+) -> List[Dict]:
+    """
+    Calculate activity scores for all bait species and return sorted list.
+
+    Args:
+        tide_state: Current tide state
+        tide_rate: Rate of tide change
+        current_strength: Current strength classification
+        clarity: Water clarity
+        time_of_day: Time period
+        wind_speed: Wind speed in mph
+
+    Returns:
+        List of bait forecast dicts sorted by activity score (highest first)
+    """
+    forecasts = []
+
+    for bait_key in BAIT_SPECIES:
+        profile = BAIT_PROFILES.get(bait_key)
+        if not profile:
+            continue
+
+        # Calculate score (without specific zone - use general preference)
+        score = calculate_bait_activity_score(
+            bait_key=bait_key,
+            tide_state=tide_state,
+            tide_rate=tide_rate,
+            current_strength=current_strength,
+            clarity=clarity,
+            time_of_day=time_of_day,
+            wind_speed=wind_speed,
+            zone=None
+        )
+
+        tier = get_bait_tier_from_score(score)
+
+        # Get best zones from profile
+        best_zones = profile.get("zones", [])
+
+        # Generate summary
+        summary = get_bait_summary(
+            bait_key=bait_key,
+            tier=tier,
+            zones=best_zones,
+            tide_state=tide_state,
+            clarity=clarity
+        )
+
+        forecasts.append({
+            "bait_key": bait_key,
+            "display_name": get_bait_display_name(bait_key),
+            "activity_score": round(score, 1),
+            "tier": tier,
+            "zones": best_zones,
+            "summary": summary,
+            "description": profile.get("description", ""),
+            "best_for": profile.get("best_for", [])
+        })
+
+    # Sort by activity score (highest first)
+    forecasts.sort(key=lambda x: x["activity_score"], reverse=True)
+
+    return forecasts
+
+
+def get_best_bait_now(
+    tide_state: str,
+    tide_rate: float,
+    current_strength: str,
+    clarity: str,
+    time_of_day: str,
+    wind_speed: float,
+    top_n: int = 3
+) -> List[str]:
+    """
+    Get the top N best baits for current conditions.
+
+    Returns list of display names for easy integration with existing features.
+    """
+    forecasts = calculate_all_bait_forecasts(
+        tide_state=tide_state,
+        tide_rate=tide_rate,
+        current_strength=current_strength,
+        clarity=clarity,
+        time_of_day=time_of_day,
+        wind_speed=wind_speed
+    )
+
+    # Return top N display names
+    return [f["display_name"] for f in forecasts[:top_n]]
