@@ -214,13 +214,13 @@ function updateCurrentConditions(data) {
 
     // WEATHER SECTION
 
-    // Air temp (same as temperature for now)
+    // Air temp (from NOAA real-time observations or forecast)
     document.getElementById('airTemp').textContent =
-        data.temperature ? Math.round(data.temperature) : '--';
+        data.air_temp_f ? Math.round(data.air_temp_f) : (data.temperature ? Math.round(data.temperature) : '--');
 
-    // Water temp
+    // Water temp (from NOAA real-time observations)
     document.getElementById('temperature').textContent =
-        data.temperature ? Math.round(data.temperature) : '--';
+        data.water_temp_f ? Math.round(data.water_temp_f) : '--';
 
     // Pressure
     const pressureTrend = data.pressure_trend || 'stable';
