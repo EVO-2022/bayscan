@@ -21,6 +21,8 @@ from app.rules.regulations import get_regulations
 # Bait scoring imports moved to function level to avoid circular imports
 from app.rules.bait_profiles import BAIT_PROFILES, get_bait_display_name
 from app.utils.timezone import get_central_isoformat, central_to_utc, central_now
+from app.utils.location_manager import get_current_location, set_current_location, VALID_LOCATIONS
+from app.utils.location_registry import get_location, get_all_locations, is_valid_location
 from app.services.learning_service import get_learning_delta, get_zone_data_sufficiency
 
 # Setup logging
@@ -111,6 +113,18 @@ class PredatorLogCreate(BaseModel):
                 "behavior": "feeding",
                 "tide": "rising",
                 "notes": "Pod of 3 dolphins"
+            }
+        }
+
+
+class LocationUpdate(BaseModel):
+    """Request model for setting current location."""
+    location_id: str
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "location_id": "bellfontaine"
             }
         }
 
@@ -1525,6 +1539,54 @@ async def health_check(db: Session = Depends(get_db)) -> Dict:
             'status': 'error',
             'error': str(e)
         }
+
+
+@app.get("/api/location")
+async def get_location_api() -> Dict:
+    """
+    Get the current active location with full metadata.
+    
+    Returns:
+        - current_location: ID of the active location
+        - current_location_data: Full metadata for active location
+        - available_locations: List of all location metadata objects
+    """
+    current_id = get_current_location()
+    all_locations = get_all_locations()
+    
+    return {
+        "current_location": current_id,
+        "current_location_data": get_location(current_id),
+        "available_locations": list(all_locations.values())
+    }
+
+
+@app.post("/api/set-location")
+async def set_location_api(data: LocationUpdate) -> Dict:
+    """
+    Set the current active location.
+    
+    Args:
+        data: LocationUpdate with location_id
+        
+    Returns:
+        Success status and new location with metadata
+    """
+    if not is_valid_location(data.location_id):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid location. Must be one of: {VALID_LOCATIONS}"
+        )
+    
+    success = set_current_location(data.location_id)
+    if not success:
+        raise HTTPException(status_code=500, detail="Failed to save location")
+    
+    return {
+        "success": True,
+        "current_location": data.location_id,
+        "location_data": get_location(data.location_id)
+    }
 
 
 if __name__ == "__main__":

@@ -6,9 +6,37 @@ from sqlalchemy.orm import Session
 from app.config import config
 from app.models.schemas import TideData
 from app.utils.timezone import get_central_isoformat
+from app.utils.location_manager import get_current_location
+from app.utils.location_registry import get_location
 import logging
 
 logger = logging.getLogger(__name__)
+
+
+def _get_tide_station_id() -> str:
+    """
+    Get the tide prediction station ID for the current location.
+    
+    Reads from the location registry based on current active location.
+    Falls back to config.tide_station_id if location has no station configured.
+    
+    Returns:
+        NOAA station ID string (e.g., "8735180")
+    """
+    try:
+        location_id = get_current_location()
+        location_data = get_location(location_id)
+        
+        if location_data:
+            noaa_config = location_data.get("noaa", {})
+            station_id = noaa_config.get("tide_prediction_station")
+            if station_id:
+                return station_id
+    except Exception as e:
+        logger.warning(f"Error reading location tide station, using default: {e}")
+    
+    # Fallback to config.yaml setting
+    return config.tide_station_id
 
 
 def fetch_tide_data(db: Session, hours_ahead: int = 48) -> bool:
@@ -89,7 +117,7 @@ def _fetch_predictions(hours_ahead: int) -> List[Dict]:
         end_date = (datetime.utcnow() + timedelta(hours=hours_ahead)).strftime('%Y%m%d %H:%M')
 
         params = {
-            'station': config.tide_station_id,
+            'station': _get_tide_station_id(),
             'begin_date': begin_date,
             'end_date': end_date,
             'product': 'predictions',
@@ -130,7 +158,7 @@ def _fetch_high_low_tides(hours_ahead: int) -> List[Dict]:
         end_date = (datetime.utcnow() + timedelta(hours=hours_ahead)).strftime('%Y%m%d')
 
         params = {
-            'station': config.tide_station_id,
+            'station': _get_tide_station_id(),
             'begin_date': begin_date,
             'end_date': end_date,
             'product': 'predictions',

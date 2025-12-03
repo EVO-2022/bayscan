@@ -34,8 +34,60 @@
 <body>
     <div class="container">
         <header>
-            <img src="/static/logo.png" alt="BayScan" class="logo">
+            <div class="header-content">
+                <!-- Left: Location Menu Button -->
+                <button id="location-menu-button" class="location-menu-btn" aria-label="Location menu">
+                    <span class="hamburger-line"></span>
+                    <span class="hamburger-line"></span>
+                    <span class="hamburger-line"></span>
+                </button>
+                
+                <!-- Center: Logo -->
+                <div class="header-logo-wrapper">
+                    <img src="/static/logo.png" alt="BayScan" class="logo">
+                </div>
+                
+                <!-- Right: Empty spacer for balance -->
+                <div class="header-spacer"></div>
+            </div>
         </header>
+
+        <!-- Location Menu Panel (slides in from left) -->
+        <div class="location-menu-panel" id="locationMenuPanel">
+            <div class="location-menu-header">
+                <h3>Locations</h3>
+                <button class="close-location-menu" id="closeLocationMenu">×</button>
+            </div>
+            <div class="location-menu-content">
+                <!-- Section 1: Mobile Bay -->
+                <div class="location-section">
+                    <h4 class="location-section-heading">Mobile Bay – West Shore</h4>
+                    <div class="location-item active" data-location="bellfontaine-dock">
+                        <span class="location-icon">📍</span>
+                        <div class="location-details">
+                            <span class="location-name">Bellfontaine Dock</span>
+                            <span class="location-sub">default</span>
+                        </div>
+                        <span class="location-check">✓</span>
+                    </div>
+                </div>
+                
+                <!-- Section 2: Perdido River -->
+                <div class="location-section">
+                    <h4 class="location-section-heading">Perdido River – Mid Section</h4>
+                    <div class="location-item disabled" data-location="river-landing">
+                        <span class="location-icon">🔒</span>
+                        <div class="location-details">
+                            <span class="location-name">River Landing</span>
+                            <span class="location-sub">coming soon</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="location-menu-footer">
+                <p>BayScan v2.8.1</p>
+            </div>
+        </div>
 
         <!-- Popover Backdrop -->
         <div class="popover-backdrop" id="popoverBackdrop"></div>

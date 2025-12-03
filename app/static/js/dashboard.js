@@ -97,6 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeModal();
     initializeConditionsSummary();
     initializeCurrentsMap();
+    initializeLocationMenu();
     loadDashboard();
     updateHourlyOutlook(); // Load hourly outlook strip
 
@@ -106,6 +107,78 @@ document.addEventListener('DOMContentLoaded', () => {
         updateHourlyOutlook(); // Refresh hourly outlook
     }, REFRESH_INTERVAL);
 });
+
+// Initialize location menu (hamburger button)
+function initializeLocationMenu() {
+    const menuBtn = document.getElementById('location-menu-button');
+    const menuPanel = document.getElementById('locationMenuPanel');
+    const closeBtn = document.getElementById('closeLocationMenu');
+    const backdrop = document.getElementById('popoverBackdrop');
+
+    if (!menuBtn || !menuPanel) return;
+
+    const openMenu = () => {
+        menuPanel.classList.add('open');
+        backdrop.classList.add('active');
+    };
+
+    const closeMenu = () => {
+        menuPanel.classList.remove('open');
+        backdrop.classList.remove('active');
+    };
+
+    menuBtn.addEventListener('click', openMenu);
+    closeBtn.addEventListener('click', closeMenu);
+    
+    // Close when clicking backdrop (only if menu is open)
+    backdrop.addEventListener('click', () => {
+        if (menuPanel.classList.contains('open')) {
+            closeMenu();
+        }
+    });
+
+    // ESC key to close
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && menuPanel.classList.contains('open')) {
+            closeMenu();
+        }
+    });
+
+    // Handle location item clicks
+    const locationItems = menuPanel.querySelectorAll('.location-item:not(.disabled)');
+    locationItems.forEach(item => {
+        item.addEventListener('click', async () => {
+            const locationId = item.dataset.location;
+            
+            // Map data-location to backend location_id
+            const locationMap = {
+                'bellfontaine-dock': 'bellfontaine',
+                'river-landing': 'river_landing'
+            };
+            
+            const backendLocationId = locationMap[locationId] || locationId;
+            
+            try {
+                const response = await fetch('/api/set-location', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ location_id: backendLocationId })
+                });
+                
+                if (response.ok) {
+                    // Reload page to reflect new location
+                    window.location.reload();
+                } else {
+                    console.error('Failed to set location');
+                    closeMenu();
+                }
+            } catch (error) {
+                console.error('Error setting location:', error);
+                closeMenu();
+            }
+        });
+    });
+}
 
 // Initialize tab switching
 function initializeTabs() {

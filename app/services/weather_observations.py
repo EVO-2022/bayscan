@@ -13,6 +13,8 @@ from datetime import datetime, timedelta
 from typing import Optional, Dict
 import requests
 from app.config import config
+from app.utils.location_manager import get_current_location
+from app.utils.location_registry import get_location
 
 logger = logging.getLogger(__name__)
 
@@ -23,12 +25,40 @@ CACHE_DURATION_MINUTES = 15  # Refresh every 15 minutes
 _cached_observations: Optional[Dict] = None
 _cache_timestamp: Optional[datetime] = None
 
+
 def _get_primary_station() -> str:
-    """Get primary station ID from config (realtime conditions station)"""
+    """
+    Get primary station ID (realtime conditions) for current location.
+    
+    Reads from location registry, falls back to config.yaml if unavailable.
+    """
+    try:
+        location_id = get_current_location()
+        location_data = get_location(location_id)
+        if location_data:
+            station = location_data.get("noaa", {}).get("realtime_station")
+            if station:
+                return station
+    except Exception as e:
+        logger.warning(f"Error reading location realtime station, using default: {e}")
     return config.realtime_conditions_station_id
 
+
 def _get_backup_station() -> str:
-    """Get backup station ID from config (tide prediction station)"""
+    """
+    Get backup station ID (tide prediction) for current location.
+    
+    Reads from location registry, falls back to config.yaml if unavailable.
+    """
+    try:
+        location_id = get_current_location()
+        location_data = get_location(location_id)
+        if location_data:
+            station = location_data.get("noaa", {}).get("tide_prediction_station")
+            if station:
+                return station
+    except Exception as e:
+        logger.warning(f"Error reading location tide station, using default: {e}")
     return config.tide_prediction_station_id
 
 
