@@ -244,6 +244,82 @@ cp fishing_forecast.db fishing_forecast.db.backup_$(date +%Y%m%d)
 
 ## Recent Changes (Latest First)
 
+### v2.8.1 (Dec 2, 2025) - NOAA STATION MIGRATION + BUG FIXES
+**Two-station data approach for improved accuracy + temperature display fix**
+
+#### A) NOAA Station Migration
+**Migrated from single-station to dual-station approach:**
+
+**Old Configuration:**
+- Single station: 8737048 (Dauphin Island) for all data
+
+**New Configuration:**
+- **Tide Predictions:** 8735180 (Bayou La Batre, AL)
+  - Tide heights, times, and stages
+  - Dedicated tide reference station
+
+- **Real-Time Conditions:** 8736897 (Middle Bay Light, AL)
+  - Water temperature (observed)
+  - Air temperature (observed)
+  - Wind speed/direction/gusts (observed)
+  - Atmospheric pressure (observed)
+  - Water level deviation (observed)
+  - NOAA PORTS station IN Mobile Bay (~5 miles from dock)
+
+**Benefits:**
+- More accurate tide predictions from proper reference station
+- Real-time bay conditions from station actually IN Mobile Bay
+- Closer to Belle Fontaine for better wind/temp accuracy
+- Clear separation: predictions vs observations
+
+**Files Modified:**
+- `config.yaml` - Added `prediction_station_id` and `realtime_station_id`
+- `app/config.py` - New config properties for both stations
+- `app/services/tide_service.py` - Uses 8735180 via config
+- `app/services/watertemp_service.py` - Updated to 8736897 primary
+- `app/services/weather_observations.py` - Updated to 8736897 primary
+- `app/templates/index.html` - Footer updated
+- `README.md`, `BAYSCAN.md` - Documentation updated
+- Created `STATION_MIGRATION.md` - Complete migration guide
+
+#### B) Temperature Display Bug Fix
+**Fixed air temp and water temp showing identical values**
+
+**Problem:**
+- Both "Air Temp" and "Water Temp" displayed the same value
+- Always showed air temperature for both fields
+
+**Root Cause:**
+- `dashboard.js` was using `data.temperature` (air temp) for both fields
+- Should have used `data.water_temp_f` for water temperature
+
+**Fix:**
+- Air temp now uses `data.air_temp_f` (NOAA real-time) with fallback
+- Water temp now correctly uses `data.water_temp_f` (NOAA real-time)
+- Displays properly: Air ~50°F, Water ~64°F (different values)
+
+**Note on Water Temp Consistency:**
+Water temperature appears relatively constant because:
+- Changes very slowly (1-2°F per day max)
+- Forecast uses most recent NOAA reading for all windows
+- Normal behavior for bay water temperature
+- Updates every 6 minutes from NOAA station
+
+**Files Modified:**
+- `app/static/js/dashboard.js:217-223` - Corrected temperature field mapping
+
+#### C) GitHub Backup Setup
+- Repository created: https://github.com/EVO-2022/bayscan
+- Git configured (Team / team@evostudios.xyz)
+- `.gitignore` created (excludes venv, databases, logs)
+- Initial commit with all 98 files
+- GitHub CLI installed and authenticated
+- All changes pushed and backed up
+
+**Total Changes:** ~200 lines (config + services + docs)
+
+---
+
 ### v2.8.0 (Nov 28, 2025) - COLD NORTH WIND PENALTY SYSTEM
 **Intelligent depth behavior adjustments for cold north wind conditions in shallow water**
 
@@ -472,6 +548,6 @@ Standardized display format across all three logs:
 
 ---
 
-**Last Updated:** November 28, 2025
-**Version:** 2.8.0
-**Status:** Production - Cold North Wind Penalty System Active
+**Last Updated:** December 2, 2025
+**Version:** 2.8.1
+**Status:** Production - Dual NOAA Station System Active
