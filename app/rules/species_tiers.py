@@ -19,6 +19,7 @@ TIER_2_SPECIES = [
     'menhaden',
     'mullet',
     'jack_crevalle',  # Primarily as predator event
+    'blue_crab',  # Always present at dock
 ]
 
 # Bait species (subset of Tier 2)

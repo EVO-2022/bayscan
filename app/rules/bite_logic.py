@@ -126,7 +126,15 @@ def calculate_bite_score(
         total_score = apply_safety_penalty(total_score, safety_level, safety_score)
 
     # Clamp to 0-100
-    return clamp(total_score, 0.0, 100.0)
+    total_score = clamp(total_score, 0.0, 100.0)
+
+    # Apply species-specific minimum score (e.g., blue_crab always present at dock)
+    from app.rules.species_behavior_profiles import get_species_profile
+    species_profile = get_species_profile(species)
+    if 'minimum_score' in species_profile:
+        total_score = max(total_score, species_profile['minimum_score'])
+
+    return total_score
 
 
 def _get_species_environmental_score(species: str, conditions: Dict[str, Any]) -> float:

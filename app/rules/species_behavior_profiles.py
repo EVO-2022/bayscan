@@ -569,6 +569,27 @@ JACK_CREVALLE = {
     'penalty_to_prey': -6,  # Applied to trout, white trout, bait species
 }
 
+BLUE_CRAB = {
+    'tier': 2,
+    'name': 'Blue Crab',
+    'type': 'resident',  # Always present at dock
+    'minimum_score': 20,  # Never below SLOW tier (always catchable)
+    'structure': {
+        'pilings': 4,  # Love structure
+        'rubble': 4,
+        'mud_bottom': 2,
+    },
+    'tide_stage': {
+        'incoming': 3,  # Active on moving water
+        'outgoing': 3,
+        'slack': 0,  # Still catchable but less active
+    },
+    'water_temp': {
+        'peak_season_min': 70,  # Summer peak
+        'workable_min': 50,  # Active year-round but slower in cold
+    },
+}
+
 # Master dictionary
 SPECIES_PROFILES = {
     'speckled_trout': SPECKLED_TROUT,
@@ -583,6 +604,7 @@ SPECIES_PROFILES = {
     'live_shrimp': LIVE_SHRIMP,
     'fiddler_crab': FIDDLER_CRAB,
     'jack_crevalle': JACK_CREVALLE,
+    'blue_crab': BLUE_CRAB,
 }
 
 

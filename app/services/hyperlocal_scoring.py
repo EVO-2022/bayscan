@@ -94,6 +94,11 @@ def calculate_zone_bite_score(
     # Clamp to 0-100
     final_score = max(0.0, min(100.0, final_score))
 
+    # Apply species-specific minimum score (e.g., blue_crab always present at dock)
+    species_profile = get_species_profile(species)
+    if 'minimum_score' in species_profile:
+        final_score = max(final_score, species_profile['minimum_score'])
+
     return {
         'bite_score': round(final_score, 1),
         'seasonal_baseline': round(seasonal_baseline, 1),
